@@ -1,129 +1,184 @@
 const calculator = Desmos.GraphingCalculator(document.getElementById('calculator'));
 
-const input = document.getElementById('latexInput');
-const sendBtn = document.getElementById('sendBtn');
-const getBtn = document.getElementById('getBtn');
-const clearBtn = document.getElementById('clearInputBtn');
-const expressionSelector = document.getElementById('expressionSelector');
-const statusIndicator = document.getElementById('statusIndicator');
+const latexInput = document.getElementById("latexInput");
+const sendBtn = document.getElementById("sendBtn");
+const getBtn = document.getElementById("getBtn");
+const selector = document.getElementById("expressionSelector");
+const indicator = document.getElementById("statusIndicator");
 
-// Insert Button Logic
+// Tabs
+document.querySelectorAll(".tab-button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
+    document.getElementById(btn.dataset.tab).classList.add("active");
+  });
+});
+
+// Insert character with escape fix
 document.querySelectorAll('[data-insert]').forEach(button => {
   button.addEventListener('click', () => {
     const insertText = JSON.parse('"' + button.getAttribute("data-insert") + '"');
-    const start = input.selectionStart;
-    const end = input.selectionEnd;
-    const before = input.value.substring(0, start);
-    const after = input.value.substring(end);
-    input.value = before + insertText + after;
-    input.selectionStart = input.selectionEnd = start + insertText.length;
-    input.focus();
+    const start = latexInput.selectionStart;
+    const end = latexInput.selectionEnd;
+    latexInput.setRangeText(insertText, start, end, "end");
+    syncToDesmos();
   });
 });
 
-sendBtn.addEventListener('click', () => {
-  const selectedId = expressionSelector.value;
-  if (!selectedId) {
-    alert('Please select a line to update.');
-    return;
-  }
-
-  calculator.setExpression({ id: selectedId, latex: input.value });
-});
-
-getBtn.addEventListener('click', () => {
-  const selectedId = expressionSelector.value;
-  if (!selectedId) {
-    alert('Please select a line.');
-    return;
-  }
-
-  const expressions = calculator.getExpressions();
-  const match = expressions.find(expr => expr.id === selectedId);
-  if (match && match.latex !== undefined) {
-    input.value = match.latex;
-  } else {
-    alert("No LaTeX expression found.");
-  }
-});
-
-clearBtn.addEventListener('click', () => {
-  input.value = '';
-});
-
-function updateExpressionSelector() {
-  const expressions = calculator.getExpressions();
-  expressionSelector.innerHTML = '';
-  expressions.forEach(expr => {
-    const option = document.createElement('option');
-    option.value = expr.id;
-    option.textContent = expr.id;
-    expressionSelector.appendChild(option);
-  });
-  statusIndicator.textContent = expressions.length ? 'Expression selected.' : 'No expression selected.';
+function syncToDesmos() {
+  const id = selector.value;
+  if (!id) return;
+  calculator.setExpression({ id, latex: latexInput.value });
 }
 
-calculator.observeEvent('change', updateExpressionSelector);
+// Real-time update from input
+latexInput.addEventListener("input", syncToDesmos);
 
-// Local Save/Load
-document.getElementById('saveBtn').addEventListener('click', () => {
-  localStorage.setItem('desmos_state', JSON.stringify(calculator.getState()));
+// Update selector list
+function updateExpressionSelector() {
+  const expressions = calculator.getExpressions();
+  selector.innerHTML = "";
+  expressions.forEach(expr => {
+    const option = document.createElement("option");
+    option.value = expr.id;
+    option.textContent = expr.id;
+    selector.appendChild(option);
+  });
+  if (expressions.length > 0) {
+    selector.value = expressions[0].id;
+    updateLatexInputFromDesmos();
+  }
+}
+
+// Update input from Desmos
+function updateLatexInputFromDesmos() {
+  const id = selector.value;
+  const expr = calculator.getExpressions().find(e => e.id === id);
+  if (expr && expr.latex !== undefined) {
+    latexInput.value = expr.latex;
+    indicator.textContent = "Selected: " + id;
+  } else {
+    indicator.textContent = "No expression selected.";
+  }
+}
+
+// Listen for manual Desmos edits
+calculator.observeEvent('change', () => {
+  updateExpressionSelector();
+  updateLatexInputFromDesmos();
 });
 
-document.getElementById('loadBtn').addEventListener('click', () => {
-  const state = localStorage.getItem('desmos_state');
-  if (state) calculator.setState(JSON.parse(state));
+// Send button
+sendBtn.addEventListener("click", syncToDesmos);
+
+// Get button
+getBtn.addEventListener("click", updateLatexInputFromDesmos);
+
+// Clear input
+document.getElementById("clearInputBtn").addEventListener("click", () => {
+  latexInput.value = "";
+  syncToDesmos();
 });
 
-// Export/Import
-document.getElementById('exportBtn').addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify(calculator.getState())], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'desmos_export.json';
-  a.click();
+// Save to local
+document.getElementById("saveBtn").addEventListener("click", () => {
+  const state = calculator.getState();
+  localStorage.setItem("desmos-graph", JSON.stringify(state));
+  alert("Graph saved to local storage.");
 });
 
-document.getElementById('importBtn').addEventListener('click', () => {
-  document.getElementById('importFile').click();
+// Load from local
+document.getElementById("loadBtn").addEventListener("click", () => {
+  const json = localStorage.getItem("desmos-graph");
+  if (json) {
+    calculator.setState(JSON.parse(json));
+    updateExpressionSelector();
+  } else {
+    alert("No saved graph found.");
+  }
 });
 
-document.getElementById('importFile').addEventListener('change', (e) => {
-  const file = e.target.files[0];
+// Export JSON
+document.getElementById("exportBtn").addEventListener("click", () => {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(calculator.getState()));
+  const downloadAnchor = document.createElement("a");
+  downloadAnchor.setAttribute("href", dataStr);
+  downloadAnchor.setAttribute("download", "desmos_graph.json");
+  downloadAnchor.click();
+});
+
+// Import JSON
+document.getElementById("importBtn").addEventListener("click", () => {
+  document.getElementById("importFile").click();
+});
+
+document.getElementById("importFile").addEventListener("change", (event) => {
+  const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = (evt) => {
-    calculator.setState(JSON.parse(evt.target.result));
+  reader.onload = (e) => {
+    const json = JSON.parse(e.target.result);
+    calculator.setState(json);
+    updateExpressionSelector();
   };
   reader.readAsText(file);
 });
 
-// Greek and Letter Tabs
-const greekLetters = [
-  'alpha','beta','gamma','delta','epsilon','zeta','eta','theta','iota','kappa','lambda',
-  'mu','nu','xi','omicron','pi','rho','sigma','tau','upsilon','phi','chi','psi','omega'
-];
-
-function populateGreek() {
-  const greekPanel = document.getElementById('greek');
-  greekPanel.innerHTML = '';
-  greekLetters.forEach(letter => {
-    const btn = document.createElement('button');
-    btn.textContent = '\\' + letter;
-    btn.setAttribute('data-insert', '\\\\' + letter);
-    greekPanel.appendChild(btn);
-  });
-}
-populateGreek();
-
-// Tab Switching
-document.querySelectorAll('.tab-button').forEach(button => {
-  button.addEventListener('click', () => {
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    const target = button.getAttribute('data-tab');
-    document.getElementById(target).classList.add('active');
-  });
+// Keyboard: Shift toggle
+let shiftOn = false;
+const shiftBtn = document.getElementById("shiftToggle");
+shiftBtn.addEventListener("click", () => {
+  shiftOn = !shiftOn;
+  renderLetters();
 });
 
-// Load default tab
-document.querySelector('.tab-button[data-tab="letters"]').click();
+function renderLetters() {
+  const container = document.getElementById("letters");
+  const chars = "abcdefghijklmnopqrstuvwxyz".split("");
+  container.innerHTML = "";
+  container.appendChild(shiftBtn);
+  chars.forEach(ch => {
+    const btn = document.createElement("button");
+    btn.setAttribute("data-insert", shiftOn ? ch.toUpperCase() : ch);
+    btn.textContent = shiftOn ? ch.toUpperCase() : ch;
+    container.appendChild(btn);
+  });
+  document.querySelectorAll('#letters [data-insert]').forEach(button => {
+    button.addEventListener('click', () => {
+      const insertText = JSON.parse('"' + button.getAttribute("data-insert") + '"');
+      const start = latexInput.selectionStart;
+      const end = latexInput.selectionEnd;
+      latexInput.setRangeText(insertText, start, end, "end");
+      syncToDesmos();
+    });
+  });
+}
+
+function renderGreek() {
+  const greek = [
+    "\\alpha", "\\beta", "\\gamma", "\\delta", "\\epsilon", "\\zeta",
+    "\\eta", "\\theta", "\\iota", "\\kappa", "\\lambda", "\\mu", "\\nu",
+    "\\xi", "\\omicron", "\\pi", "\\rho", "\\sigma", "\\tau", "\\upsilon",
+    "\\phi", "\\chi", "\\psi", "\\omega"
+  ];
+  const container = document.getElementById("greek");
+  greek.forEach(symbol => {
+    const btn = document.createElement("button");
+    btn.setAttribute("data-insert", symbol);
+    btn.textContent = symbol.replace("\\", "");
+    container.appendChild(btn);
+  });
+  document.querySelectorAll('#greek [data-insert]').forEach(button => {
+    button.addEventListener('click', () => {
+      const insertText = JSON.parse('"' + button.getAttribute("data-insert") + '"');
+      const start = latexInput.selectionStart;
+      const end = latexInput.selectionEnd;
+      latexInput.setRangeText(insertText, start, end, "end");
+      syncToDesmos();
+    });
+  });
+}
+
+renderLetters();
+renderGreek();
+updateExpressionSelector();
