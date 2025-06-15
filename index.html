@@ -4,19 +4,27 @@
   <meta charset="UTF-8">
   <title>Desmos + Greek Keyboard</title>
   <link rel="stylesheet" href="style.css">
-  <meta name="viewport" content="width=1024">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
 </head>
 <body>
   <h1>Desmos Graph + Greek Keyboard</h1>
   <div id="calculator"></div>
 
-  <div id="virtual-input-wrapper">
-    <div id="virtual-input" contenteditable="true" spellcheck="false"></div>
-    <div id="keyboard"></div>
-    <div id="actions">
-      <button id="clearBtn">Clear</button>
+  <div id="controlPanel">
+    <textarea id="latexInput" rows="3" placeholder="LaTeX here..."></textarea>
+    <div id="buttonPanel">
+      <!-- 必要なギリシャ文字や関数ボタンを追加可能 -->
+      <button data-insert="\\alpha">α</button>
+      <button data-insert="\\beta">β</button>
+      <button data-insert="\\gamma">γ</button>
+      <button data-insert="\\int_{}^{}">∫</button>
+      <button data-insert="\\sqrt{}">√</button>
+    </div>
+    <div id="actionButtons">
       <button id="sendBtn">Send to Desmos</button>
+      <button id="pullBtn">← Get from Desmos</button>
+      <button id="clearInputBtn">Clear</button>
     </div>
   </div>
 
