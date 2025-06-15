@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Desmos + Greek Keyboard ver.0.1</title>
+  <title>Desmos + Greek Keyboard ver.1</title>
   <link rel="stylesheet" href="style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
@@ -42,10 +42,14 @@
       padding: 8px 16px;
       font-size: 1em;
     }
+    #statusIndicator {
+      margin-top: 10px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-  <h1>Desmos Graph + Greek Keyboard ver.0</h1>
+  <h1>Desmos Graph + Greek Keyboard ver.1</h1>
   <div id="calculator"></div>
 
   <div id="controlPanel">
@@ -91,7 +95,9 @@
 
     <div id="actionButtons">
       <button id="sendBtn">Send to Desmos</button>
+      <button id="getBtn">Get from Desmos</button>
       <button id="clearInputBtn">Clear</button>
+      <div id="statusIndicator">No expression selected.</div>
     </div>
   </div>
 
@@ -99,6 +105,7 @@
     document.addEventListener("DOMContentLoaded", () => {
       const calculator = Desmos.GraphingCalculator(document.getElementById("calculator"));
       const input = document.getElementById("latexInput");
+      const statusIndicator = document.getElementById("statusIndicator");
       let lastId = null;
 
       document.querySelectorAll(".tab-button").forEach(button => {
@@ -131,6 +138,25 @@
         if (latex !== "") {
           lastId = `expr${Date.now()}`;
           calculator.setExpression({ id: lastId, latex });
+          statusIndicator.textContent = `Last expression ID: ${lastId}`;
+        }
+      });
+
+      document.getElementById("getBtn").addEventListener("click", () => {
+        if (!lastId) {
+          statusIndicator.textContent = "No expression ID recorded.";
+          alert("取得可能なLaTeX式が見つかりません。");
+          return;
+        }
+        const expressions = calculator.getExpressions();
+        const target = expressions.find(exp => exp.id === lastId);
+        if (target && target.latex) {
+          input.value = target.latex;
+          input.dispatchEvent(new Event("input"));
+          statusIndicator.textContent = `Loaded from ID: ${lastId}`;
+        } else {
+          alert("取得可能なLaTeX式が見つかりません。");
+          statusIndicator.textContent = "Expression not found.";
         }
       });
 
@@ -139,6 +165,7 @@
         if (lastId) calculator.removeExpression({ id: lastId });
         calculator.removeExpression({ id: "live_preview" });
         lastId = null;
+        statusIndicator.textContent = "No expression selected.";
         input.focus();
       });
 
