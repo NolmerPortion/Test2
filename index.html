@@ -85,6 +85,69 @@
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script>
+    const calculator = Desmos.GraphingCalculator(document.getElementById("calculator"));
+    const latexInput = document.getElementById("latexInput");
+    const selector = document.getElementById("expressionSelector");
+    const indicator = document.getElementById("statusIndicator");
+
+    function updateSelector() {
+      const expressions = calculator.getExpressions();
+      selector.innerHTML = "";
+      expressions.forEach((e, i) => {
+        const opt = document.createElement("option");
+        opt.value = e.id;
+        opt.textContent = i + 1;
+        selector.appendChild(opt);
+      });
+      if (expressions.length > 0) selector.value = expressions[0].id;
+    }
+
+    function syncToDesmos() {
+      const id = selector.value;
+      if (!id) return;
+      calculator.setExpression({ id, latex: latexInput.value });
+    }
+
+    function updateFromDesmos() {
+      const expr = calculator.getExpressions().find(e => e.id === selector.value);
+      if (expr && expr.latex !== undefined) latexInput.value = expr.latex;
+    }
+
+    document.getElementById("sendBtn").onclick = syncToDesmos;
+    document.getElementById("getBtn").onclick = updateFromDesmos;
+    document.getElementById("clearInputBtn").onclick = () => {
+      latexInput.value = "";
+      syncToDesmos();
+    };
+
+    calculator.observeEvent("change", () => {
+      updateSelector();
+      updateFromDesmos();
+    });
+
+    latexInput.addEventListener("input", syncToDesmos);
+
+    document.querySelectorAll('[data-insert]').forEach(button => {
+      button.addEventListener("click", () => {
+        const insert = JSON.parse('"' + button.getAttribute("data-insert") + '"');
+        const start = latexInput.selectionStart;
+        const end = latexInput.selectionEnd;
+        latexInput.setRangeText(insert, start, end, "end");
+        syncToDesmos();
+        latexInput.focus();
+      });
+    });
+
+    document.querySelectorAll(".tab-button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
+        document.getElementById(btn.dataset.tab).classList.add("active");
+      });
+    });
+
+    document.querySelector(".tab-button[data-tab='letters']").click();
+    updateSelector();
+  </script>
 </body>
 </html>
