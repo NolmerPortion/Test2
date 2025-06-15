@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Desmos + Greek Keyboard</title>
+  <title>Desmos + Greek Keyboard ver.0</title>
   <link rel="stylesheet" href="style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
@@ -45,7 +45,7 @@
   </style>
 </head>
 <body>
-  <h1>Desmos Graph + Greek Keyboard</h1>
+  <h1>Desmos Graph + Greek Keyboard ver.0</h1>
   <div id="calculator"></div>
 
   <div id="controlPanel">
@@ -91,7 +91,6 @@
 
     <div id="actionButtons">
       <button id="sendBtn">Send to Desmos</button>
-      <button id="pullBtn">← Get from Desmos</button>
       <button id="clearInputBtn">Clear</button>
     </div>
   </div>
@@ -100,12 +99,8 @@
     document.addEventListener("DOMContentLoaded", () => {
       const calculator = Desmos.GraphingCalculator(document.getElementById("calculator"));
       const input = document.getElementById("latexInput");
+      let lastId = null;
 
-      const sendBtn = document.getElementById("sendBtn");
-      const clearInputBtn = document.getElementById("clearInputBtn");
-      const pullBtn = document.getElementById("pullBtn");
-
-      // タブ切り替え処理
       document.querySelectorAll(".tab-button").forEach(button => {
         button.addEventListener("click", () => {
           const target = button.getAttribute("data-tab");
@@ -115,43 +110,36 @@
       });
       document.getElementById("greek").classList.add("active");
 
-      // 入力補助ボタン処理
       document.querySelectorAll("#buttonPanel button").forEach(button => {
         button.addEventListener("click", () => {
-          const insertText = button.getAttribute("data-insert").replace(/\\\\/g, "\\");
+          const insertText = button.getAttribute("data-insert").replace(/\\/g, "\\");
           insertAtCursor(input, insertText);
         });
       });
 
       input.addEventListener("input", () => {
         const latex = input.value.trim();
-        calculator.setExpression({ id: "live_preview", latex });
+        if (lastId) {
+          calculator.setExpression({ id: lastId, latex });
+        } else {
+          calculator.setExpression({ id: "live_preview", latex });
+        }
       });
 
-      sendBtn.addEventListener("click", () => {
+      document.getElementById("sendBtn").addEventListener("click", () => {
         const latex = input.value.trim();
         if (latex !== "") {
-          const id = `expr${Date.now()}`;
-          calculator.setExpression({ id, latex });
+          lastId = `expr${Date.now()}`;
+          calculator.setExpression({ id: lastId, latex });
         }
       });
 
-      clearInputBtn.addEventListener("click", () => {
+      document.getElementById("clearInputBtn").addEventListener("click", () => {
         input.value = "";
+        if (lastId) calculator.removeExpression({ id: lastId });
         calculator.removeExpression({ id: "live_preview" });
+        lastId = null;
         input.focus();
-      });
-
-      pullBtn.addEventListener("click", () => {
-        const expressions = calculator.getExpressions();
-        const visibleExprs = expressions.filter(expr => expr.latex && expr.id !== "live_preview");
-        if (visibleExprs.length > 0) {
-          const lastExpr = visibleExprs[visibleExprs.length - 1];
-          input.value = lastExpr.latex;
-          input.focus();
-        } else {
-          alert("取得可能なLaTeX式が見つかりません。");
-        }
       });
 
       function insertAtCursor(textarea, text) {
