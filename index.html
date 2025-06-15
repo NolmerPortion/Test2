@@ -6,6 +6,12 @@
   <link rel="stylesheet" href="style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
+  <style>
+    .tab-button { margin: 2px; padding: 5px 10px; }
+    .tab-content { display: none; margin-top: 10px; }
+    .tab-content.active { display: block; }
+    #buttonPanel button { margin: 2px; }
+  </style>
 </head>
 <body>
   <h1>Desmos Graph + Greek Keyboard</h1>
@@ -13,13 +19,45 @@
 
   <div id="controlPanel">
     <textarea id="latexInput" rows="3" placeholder="LaTeX here..."></textarea>
-    <div id="buttonPanel">
-      <button data-insert="\\alpha">α</button>
-      <button data-insert="\\beta">β</button>
-      <button data-insert="\\gamma">γ</button>
-      <button data-insert="\\int_{}^{}">∫</button>
-      <button data-insert="\\sqrt{}">√</button>
+
+    <div id="tabs">
+      <button class="tab-button" data-tab="greek">Greek</button>
+      <button class="tab-button" data-tab="functions">Functions</button>
+      <button class="tab-button" data-tab="letters">Alphabet</button>
     </div>
+
+    <div id="buttonPanel">
+      <div id="greek" class="tab-content">
+        <button data-insert="\\alpha">α</button><button data-insert="\\beta">β</button><button data-insert="\\gamma">γ</button>
+        <button data-insert="\\delta">δ</button><button data-insert="\\epsilon">ε</button><button data-insert="\\zeta">ζ</button>
+        <button data-insert="\\eta">η</button><button data-insert="\\theta">θ</button><button data-insert="\\iota">ι</button>
+        <button data-insert="\\kappa">κ</button><button data-insert="\\lambda">λ</button><button data-insert="\\mu">μ</button>
+        <button data-insert="\\nu">ν</button><button data-insert="\\xi">ξ</button><button data-insert="\\omicron">ο</button>
+        <button data-insert="\\pi">π</button><button data-insert="\\rho">ρ</button><button data-insert="\\sigma">σ</button>
+        <button data-insert="\\tau">τ</button><button data-insert="\\upsilon">υ</button><button data-insert="\\phi">φ</button>
+        <button data-insert="\\chi">χ</button><button data-insert="\\psi">ψ</button><button data-insert="\\omega">ω</button>
+      </div>
+
+      <div id="functions" class="tab-content">
+        <button data-insert="\\int_{}^{}">∫</button><button data-insert="\\sum_{}^{}">∑</button>
+        <button data-insert="\\prod_{}^{}">∏</button><button data-insert="\\frac{}{}">a/b</button>
+        <button data-insert="\\exp">exp</button><button data-insert="\\ln">ln</button>
+        <button data-insert="\\log">log</button><button data-insert="\\cos">cos</button>
+        <button data-insert="\\sin">sin</button><button data-insert="\\tan">tan</button>
+        <button data-insert="\\sinh">sinh</button><button data-insert="\\cosh">cosh</button>
+        <button data-insert="\\tanh">tanh</button><button data-insert="\\arcsin">arcsin</button>
+        <button data-insert="\\arccos">arccos</button><button data-insert="\\arctan">arctan</button>
+        <button data-insert="\\operatorname{arsinh}">arsinh</button>
+        <button data-insert="\\operatorname{arcosh}">arcosh</button>
+        <button data-insert="\\operatorname{artanh}">artanh</button>
+      </div>
+
+      <div id="letters" class="tab-content">
+        <button data-insert="a">a</button><button data-insert="b">b</button><button data-insert="c">c</button>
+        <button data-insert="x">x</button><button data-insert="y">y</button><button data-insert="z">z</button>
+      </div>
+    </div>
+
     <div id="actionButtons">
       <button id="sendBtn">Send to Desmos</button>
       <button id="pullBtn">← Get from Desmos</button>
@@ -36,11 +74,23 @@
       const clearInputBtn = document.getElementById("clearInputBtn");
       const pullBtn = document.getElementById("pullBtn");
 
+      // 切り替えタブ処理
+      const tabButtons = document.querySelectorAll(".tab-button");
+      const tabContents = document.querySelectorAll(".tab-content");
+      tabButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          const target = btn.getAttribute("data-tab");
+          tabContents.forEach(c => c.classList.remove("active"));
+          document.getElementById(target).classList.add("active");
+        });
+      });
+      // 初期表示
+      document.getElementById("greek").classList.add("active");
+
       document.querySelectorAll("#buttonPanel button").forEach(button => {
         button.addEventListener("click", () => {
-          // 正しい1バックスラッシュを挿入（data-insertでは\\を渡している）
           const rawInsert = button.getAttribute("data-insert");
-          const insertText = rawInsert.replace(/\\\\/g, "\\");
+          const insertText = rawInsert.replace(/\\/g, "\\");
           insertAtCursor(input, insertText);
         });
       });
@@ -69,7 +119,6 @@
         const visibleExprs = expressions.filter(expr => expr.latex && expr.id !== "live_preview");
 
         if (visibleExprs.length > 0) {
-          // 一番最後に追加された（表示されている）数式を取得
           const lastExpr = visibleExprs[visibleExprs.length - 1];
           input.value = lastExpr.latex;
           input.focus();
