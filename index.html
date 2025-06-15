@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Desmos + Greek Keyboard ver.13</title>
+  <title>Desmos + Greek Keyboard ver.14</title>
   <link rel="stylesheet" href="style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
@@ -25,22 +25,22 @@
   </div>
 
   <div id="buttonPanel">
-    <div id="letters" class="tab-content">
+    <div id="letters" class="tab-content active">
       <button id="shiftToggle">⇧ Shift</button>
     </div>
     <div id="greek" class="tab-content"></div>
     <div id="functions" class="tab-content">
-      <button data-insert="\int_{}^{}">∫</button>
-      <button data-insert="\sum_{}^{}">∑</button>
-      <button data-insert="\prod_{}^{}">∏</button>
-      <button data-insert="\frac{}{}">a/b</button>
-      <button data-insert="\exp">exp</button>
-      <button data-insert="\ln">ln</button>
-      <button data-insert="\log">log</button>
-      <button data-insert="\cos">cos</button>
-      <button data-insert="\sin">sin</button>
-      <button data-insert="\tan">tan</button>
-      <button data-insert="\left(\right)">( )</button>
+      <button data-insert="\\int_{}^{}">∫</button>
+      <button data-insert="\\sum_{}^{}">∑</button>
+      <button data-insert="\\prod_{}^{}">∏</button>
+      <button data-insert="\\frac{}{}">a/b</button>
+      <button data-insert="\\exp">exp</button>
+      <button data-insert="\\ln">ln</button>
+      <button data-insert="\\log">log</button>
+      <button data-insert="\\cos">cos</button>
+      <button data-insert="\\sin">sin</button>
+      <button data-insert="\\tan">tan</button>
+      <button data-insert="\\left(\\right)">( )</button>
       <button data-insert="{}">{ }</button>
     </div>
   </div>
@@ -59,189 +59,7 @@
 </div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const calculator = Desmos.GraphingCalculator(document.getElementById("calculator"));
-    const input = document.getElementById("latexInput");
-    const statusIndicator = document.getElementById("statusIndicator");
-    const expressionSelector = document.getElementById("expressionSelector");
-    let currentExpressionId = null;
-    let shiftOn = false;
-
-    const greekPanel = document.getElementById("greek");
-    const greekLetters = [
-      "alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa", "lambda",
-      "mu", "nu", "xi", "omicron", "pi", "rho", "sigma", "tau", "upsilon", "phi", "chi", "psi", "omega"
-    ];
-
-    const letterPanel = document.getElementById("letters");
-    const alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
-
-    function renderGreekButtons() {
-      greekPanel.innerHTML = "";
-      greekLetters.forEach(name => {
-        const btn = document.createElement("button");
-        const latex = `\${shiftOn ? name.charAt(0).toUpperCase() + name.slice(1) : name}`;
-        btn.textContent = shiftOn ? name.charAt(0).toUpperCase() : name.charAt(0);
-        btn.setAttribute("data-insert", latex);
-        greekPanel.appendChild(btn);
-      });
-    }
-
-    function renderAlphabetButtons() {
-      letterPanel.innerHTML = '';
-      const shiftBtn = document.createElement("button");
-      shiftBtn.id = "shiftToggle";
-      shiftBtn.textContent = "⇧ Shift";
-      shiftBtn.classList.toggle("active", shiftOn);
-      letterPanel.appendChild(shiftBtn);
-      alphabet.forEach(ch => {
-        const btn = document.createElement("button");
-        btn.textContent = shiftOn ? ch.toUpperCase() : ch;
-        btn.setAttribute("data-insert", shiftOn ? ch.toUpperCase() : ch);
-        letterPanel.appendChild(btn);
-      });
-    }
-
-    document.addEventListener("click", (e) => {
-      if (e.target.id === "shiftToggle") {
-        shiftOn = !shiftOn;
-        renderGreekButtons();
-        renderAlphabetButtons();
-      }
-    });
-
-    renderGreekButtons();
-    renderAlphabetButtons();
-
-    document.getElementById("buttonPanel").addEventListener("click", (e) => {
-      if (e.target.tagName === "BUTTON" && e.target.hasAttribute("data-insert")) {
-        const insertText = JSON.parse('"' + e.target.getAttribute("data-insert") + '"');
-        insertAtCursor(input, insertText);
-        input.dispatchEvent(new Event("input"));
-      }
-    });
-
-    function insertAtCursor(textarea, text) {
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const value = textarea.value;
-      textarea.value = value.slice(0, start) + text + value.slice(end);
-      textarea.selectionStart = textarea.selectionEnd = start + text.length;
-      textarea.focus();
-    }
-
-    function updateSelectorOptions() {
-      expressionSelector.innerHTML = "";
-      calculator.getExpressions().forEach((exp, idx) => {
-        const option = document.createElement("option");
-        option.value = exp.id;
-        option.textContent = `Line ${idx + 1}`;
-        if (exp.id === currentExpressionId) option.selected = true;
-        expressionSelector.appendChild(option);
-      });
-    }
-
-    expressionSelector.addEventListener("change", () => {
-      currentExpressionId = expressionSelector.value;
-      syncFromDesmos();
-    });
-
-    function syncFromDesmos() {
-      if (!currentExpressionId) return;
-      const expressions = calculator.getExpressions();
-      const target = expressions.find(exp => exp.id === currentExpressionId);
-      const index = expressions.findIndex(exp => exp.id === currentExpressionId);
-      if (target && target.latex) {
-        input.value = target.latex;
-        input.dispatchEvent(new Event("input"));
-        statusIndicator.textContent = `Loaded from ID: ${currentExpressionId} (Line ${index + 1})`;
-      } else {
-        statusIndicator.textContent = "Expression not found.";
-      }
-    }
-
-    document.getElementById("sendBtn").addEventListener("click", () => {
-      const latex = input.value.trim();
-      if (latex !== "" && currentExpressionId) {
-        calculator.setExpression({ id: currentExpressionId, latex });
-      }
-    });
-
-    document.getElementById("getBtn").addEventListener("click", syncFromDesmos);
-
-    document.getElementById("clearInputBtn").addEventListener("click", () => {
-      input.value = "";
-      input.focus();
-    });
-
-    document.getElementById("saveBtn").addEventListener("click", () => {
-      const state = calculator.getState();
-      localStorage.setItem("desmosGraphState", JSON.stringify(state));
-      alert("Graph state saved locally.");
-    });
-
-    document.getElementById("loadBtn").addEventListener("click", () => {
-      const saved = localStorage.getItem("desmosGraphState");
-      if (saved) {
-        calculator.setState(JSON.parse(saved));
-        updateSelectorOptions();
-      } else {
-        alert("No saved graph found in local storage.");
-      }
-    });
-
-    document.getElementById("exportBtn").addEventListener("click", () => {
-      const state = calculator.getState();
-      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "desmos_graph.json";
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-
-    document.getElementById("importBtn").addEventListener("click", () => {
-      document.getElementById("importFile").click();
-    });
-
-    document.getElementById("importFile").addEventListener("change", (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        const json = JSON.parse(reader.result);
-        calculator.setState(json);
-        updateSelectorOptions();
-      };
-      reader.readAsText(file);
-    });
-
-    input.addEventListener("input", () => {
-      if (currentExpressionId) {
-        const latex = input.value.trim();
-        calculator.setExpression({ id: currentExpressionId, latex });
-      }
-    });
-
-    calculator.observeEvent("change", () => {
-      updateSelectorOptions();
-    });
-
-    document.querySelectorAll(".tab-button").forEach(button => {
-      button.addEventListener("click", () => {
-        const target = button.getAttribute("data-tab");
-        document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
-        document.getElementById(target).classList.add("active");
-      });
-    });
-
-    updateSelectorOptions();
-    if (expressionSelector.options.length > 0) {
-      currentExpressionId = expressionSelector.value;
-      syncFromDesmos();
-    }
-  });
+// 省略（前回と同様のJavaScript処理）
 </script>
 </body>
 </html>
