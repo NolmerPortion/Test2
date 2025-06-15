@@ -2,35 +2,47 @@ body {
   font-family: sans-serif;
   margin: 0;
   padding: 0;
+  background-color: #f4f4f4;
 }
 
 #calculator {
   width: 100%;
   height: 400px;
+  border-bottom: 2px solid #ccc;
 }
 
 #controlPanel {
   padding: 10px;
-  background: #f9f9f9;
+  background: #fff;
   border-top: 1px solid #ccc;
 }
 
 #latexInput {
   width: 100%;
   font-size: 1.1em;
+  padding: 8px;
+  box-sizing: border-box;
   margin-bottom: 10px;
 }
 
-#buttonPanel {
+#expressionSelector {
+  margin: 5px 0 10px 0;
+  padding: 5px;
+  font-size: 1em;
+}
+
+#tabs {
   margin-bottom: 10px;
 }
 
 .tab-button {
-  padding: 5px 10px;
+  padding: 5px 12px;
   margin-right: 5px;
   background-color: #eee;
   border: 1px solid #ccc;
   cursor: pointer;
+  font-weight: bold;
+  border-radius: 5px;
 }
 
 .tab-button:hover {
@@ -39,7 +51,7 @@ body {
 
 .tab-content {
   display: none;
-  margin-top: 10px;
+  margin-top: 5px;
 }
 
 .tab-content.active {
@@ -49,35 +61,45 @@ body {
 }
 
 #buttonPanel button {
-  padding: 5px 10px;
-  margin: 2px;
+  padding: 6px 10px;
   font-size: 1em;
   cursor: pointer;
-  background: white;
+  background: #fff;
   border: 1px solid #aaa;
   border-radius: 4px;
+  min-width: 40px;
+  text-align: center;
 }
 
 #buttonPanel button:hover {
-  background: #eee;
-}
-
-#actionButtons {
-  margin-top: 10px;
-}
-
-#statusIndicator {
-  margin-top: 5px;
-  font-size: 0.9em;
-  color: #333;
-}
-
-#expressionSelector {
-  margin-bottom: 10px;
-  font-size: 1em;
+  background: #f0f0f0;
 }
 
 #shiftToggle.active {
   background-color: #cce5ff;
   border-color: #339af0;
+}
+
+#actionButtons {
+  margin-top: 15px;
+}
+
+#actionButtons button {
+  margin-right: 5px;
+  margin-top: 5px;
+  padding: 6px 10px;
+  font-size: 0.9em;
+  background: #e8e8e8;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+}
+
+#actionButtons button:hover {
+  background: #dcdcdc;
+}
+
+#statusIndicator {
+  margin-top: 8px;
+  font-size: 0.9em;
+  color: #333;
 }
