@@ -1,94 +1,83 @@
 body {
-  display: flex;
-  flex-direction: column;
-  font-family: Arial, sans-serif;
+  font-family: sans-serif;
   margin: 0;
   padding: 0;
-  height: 100vh;
 }
 
 #calculator {
-  flex: 1;
-  min-height: 400px;
+  width: 100%;
+  height: 400px;
 }
 
 #controlPanel {
   padding: 10px;
-  background-color: #f9f9f9;
-  border-top: 2px solid #ccc;
+  background: #f9f9f9;
+  border-top: 1px solid #ccc;
 }
 
 #latexInput {
   width: 100%;
   font-size: 1.1em;
   margin-bottom: 10px;
-  padding: 5px;
-  box-sizing: border-box;
 }
 
 #buttonPanel {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
   margin-bottom: 10px;
+}
+
+.tab-button {
+  padding: 5px 10px;
+  margin-right: 5px;
+  background-color: #eee;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.tab-button:hover {
+  background-color: #ddd;
 }
 
 .tab-content {
   display: none;
-  flex-wrap: wrap;
-  gap: 5px;
   margin-top: 10px;
 }
 
 .tab-content.active {
   display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
 }
 
-button {
-  font-size: 16px;
-  padding: 8px 12px;
+#buttonPanel button {
+  padding: 5px 10px;
   margin: 2px;
+  font-size: 1em;
+  cursor: pointer;
+  background: white;
   border: 1px solid #aaa;
-  background-color: #fff;
   border-radius: 4px;
-  cursor: pointer;
-  min-width: 40px;
 }
 
-button:hover {
-  background-color: #eef;
-}
-
-#tabs {
-  display: flex;
-  margin-bottom: 5px;
-}
-
-.tab-button {
-  flex: 1;
-  padding: 6px 10px;
-  background-color: #ddd;
-  border: 1px solid #aaa;
-  border-bottom: none;
-  cursor: pointer;
-}
-
-.tab-button.active {
-  background-color: #fff;
-  border-bottom: 2px solid white;
-  font-weight: bold;
+#buttonPanel button:hover {
+  background: #eee;
 }
 
 #actionButtons {
   margin-top: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
 }
 
 #statusIndicator {
   margin-top: 5px;
   font-size: 0.9em;
   color: #333;
+}
+
+#expressionSelector {
+  margin-bottom: 10px;
+  font-size: 1em;
+}
+
+#shiftToggle.active {
+  background-color: #cce5ff;
+  border-color: #339af0;
 }
