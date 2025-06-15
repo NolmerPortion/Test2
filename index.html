@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Desmos + Greek Keyboard ver.16</title>
+  <title>Desmos + Greek Keyboard ver.17</title>
   <link rel="stylesheet" href="style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
@@ -27,12 +27,9 @@
     <div id="buttonPanel">
       <div id="letters" class="tab-content">
         <button id="shiftToggle">⇧ Shift</button>
-        <!-- Alphabet buttons will be dynamically injected here -->
       </div>
 
-      <div id="greek" class="tab-content">
-        <!-- Greek buttons will be dynamically injected here -->
-      </div>
+      <div id="greek" class="tab-content"></div>
 
       <div id="functions" class="tab-content">
         <button data-insert="\\int_{}^{}">∫</button>
@@ -62,18 +59,6 @@
       <div id="statusIndicator">No expression selected.</div>
     </div>
   </div>
-
-  <script>
-    // Track changes in Desmos and update textarea accordingly
-    const observer = new MutationObserver(() => {
-      const currentId = document.getElementById("expressionSelector").value;
-      const exp = calculator.getExpressions().find(e => e.id === currentId);
-      if (exp && exp.latex !== document.getElementById("latexInput").value) {
-        document.getElementById("latexInput").value = exp.latex;
-      }
-    });
-    observer.observe(document.getElementById("calculator"), { childList: true, subtree: true });
-  </script>
 
   <script src="script.js"></script>
 </body>
