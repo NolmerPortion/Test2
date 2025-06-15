@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Desmos + Greek Keyboard ver.10</title>
+  <title>Desmos + Greek Keyboard ver.11</title>
   <link rel="stylesheet" href="style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
@@ -19,7 +19,7 @@
   </style>
 </head>
 <body>
-  <h1>Desmos Graph + Greek Keyboard ver.10</h1>
+  <h1>Desmos Graph + Greek Keyboard ver.11</h1>
   <div id="calculator"></div>
 
   <div id="controlPanel">
@@ -88,39 +88,46 @@
       const statusIndicator = document.getElementById("statusIndicator");
       const expressionSelector = document.getElementById("expressionSelector");
 
+      let currentExpressionId = null;
+
       function updateSelectorOptions() {
         expressionSelector.innerHTML = "";
         calculator.getExpressions().forEach((exp, idx) => {
           const option = document.createElement("option");
           option.value = exp.id;
           option.textContent = `Line ${idx + 1}`;
+          if (exp.id === currentExpressionId) option.selected = true;
           expressionSelector.appendChild(option);
         });
       }
 
-      document.getElementById("sendBtn").addEventListener("click", () => {
-        const latex = input.value.trim();
-        const selectedId = expressionSelector.value;
-        if (latex !== "" && selectedId) {
-          calculator.setExpression({ id: selectedId, latex });
-        }
+      expressionSelector.addEventListener("change", () => {
+        currentExpressionId = expressionSelector.value;
+        syncFromDesmos();
       });
 
-      document.getElementById("getBtn").addEventListener("click", syncFromDesmos);
-
       function syncFromDesmos() {
-        const selectedId = expressionSelector.value;
+        if (!currentExpressionId) return;
         const expressions = calculator.getExpressions();
-        const target = expressions.find(exp => exp.id === selectedId);
-        const targetIndex = expressions.findIndex(exp => exp.id === selectedId);
+        const target = expressions.find(exp => exp.id === currentExpressionId);
+        const index = expressions.findIndex(exp => exp.id === currentExpressionId);
         if (target && target.latex) {
           input.value = target.latex;
           input.dispatchEvent(new Event("input"));
-          statusIndicator.textContent = `Loaded from ID: ${selectedId} (Line ${targetIndex + 1})`;
+          statusIndicator.textContent = `Loaded from ID: ${currentExpressionId} (Line ${index + 1})`;
         } else {
           statusIndicator.textContent = "Expression not found.";
         }
       }
+
+      document.getElementById("sendBtn").addEventListener("click", () => {
+        const latex = input.value.trim();
+        if (latex !== "" && currentExpressionId) {
+          calculator.setExpression({ id: currentExpressionId, latex });
+        }
+      });
+
+      document.getElementById("getBtn").addEventListener("click", syncFromDesmos);
 
       document.getElementById("clearInputBtn").addEventListener("click", () => {
         input.value = "";
@@ -171,16 +178,14 @@
       });
 
       input.addEventListener("input", () => {
-        const selectedId = expressionSelector.value;
-        if (selectedId) {
+        if (currentExpressionId) {
           const latex = input.value.trim();
-          calculator.setExpression({ id: selectedId, latex });
+          calculator.setExpression({ id: currentExpressionId, latex });
         }
       });
 
       calculator.observeEvent("change", () => {
         updateSelectorOptions();
-        syncFromDesmos();
       });
 
       document.querySelectorAll(".tab-button").forEach(button => {
@@ -209,8 +214,11 @@
         textarea.focus();
       }
 
-      calculator.observeEvent("change", updateSelectorOptions);
       updateSelectorOptions();
+      if (expressionSelector.options.length > 0) {
+        currentExpressionId = expressionSelector.value;
+        syncFromDesmos();
+      }
     });
   </script>
 </body>
