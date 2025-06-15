@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Desmos + Greek Keyboard ver.3</title>
+  <title>Desmos + Greek Keyboard ver.4</title>
   <link rel="stylesheet" href="style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
@@ -49,7 +49,7 @@
   </style>
 </head>
 <body>
-  <h1>Desmos Graph + Greek Keyboard ver.3</h1>
+  <h1>Desmos Graph + Greek Keyboard ver.4</h1>
   <div id="calculator"></div>
 
   <div id="controlPanel">
@@ -121,8 +121,7 @@
         button.addEventListener("click", () => {
           const insertText = JSON.parse('"' + button.getAttribute("data-insert") + '"');
           insertAtCursor(input, insertText);
-          // 自動送信
-          document.getElementById("sendBtn").click();
+          input.dispatchEvent(new Event("input")); // トリガー
         });
       });
 
@@ -131,8 +130,12 @@
         if (lastId) {
           calculator.setExpression({ id: lastId, latex });
         } else {
-          calculator.setExpression({ id: "live_preview", latex });
+          lastId = `expr${Date.now()}`;
+          calculator.setExpression({ id: lastId, latex });
         }
+        const expressions = calculator.getExpressions();
+        const targetIndex = expressions.findIndex(exp => exp.id === lastId);
+        statusIndicator.textContent = `Last expression ID: ${lastId} (Line ${targetIndex + 1})`;
       });
 
       calculator.observeEvent("change", () => {
@@ -149,7 +152,9 @@
       document.getElementById("sendBtn").addEventListener("click", () => {
         const latex = input.value.trim();
         if (latex !== "") {
-          lastId = `expr${Date.now()}`;
+          if (!lastId) {
+            lastId = `expr${Date.now()}`;
+          }
           calculator.setExpression({ id: lastId, latex });
           const expressions = calculator.getExpressions();
           const targetIndex = expressions.findIndex(exp => exp.id === lastId);
