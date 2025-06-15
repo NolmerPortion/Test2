@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Desmos + Greek Keyboard ver.7</title>
+  <title>Desmos + Greek Keyboard ver.8</title>
   <link rel="stylesheet" href="style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
@@ -49,7 +49,7 @@
   </style>
 </head>
 <body>
-  <h1>Desmos Graph + Greek Keyboard ver.7</h1>
+  <h1>Desmos Graph + Greek Keyboard ver.8</h1>
   <div id="calculator"></div>
 
   <div id="controlPanel">
@@ -131,7 +131,9 @@
         }
       });
 
-      document.getElementById("getBtn").addEventListener("click", () => {
+      document.getElementById("getBtn").addEventListener("click", syncFromDesmos);
+
+      function syncFromDesmos() {
         const selectedId = expressionSelector.value;
         const expressions = calculator.getExpressions();
         const target = expressions.find(exp => exp.id === selectedId);
@@ -141,10 +143,9 @@
           input.dispatchEvent(new Event("input"));
           statusIndicator.textContent = `Loaded from ID: ${selectedId} (Line ${targetIndex + 1})`;
         } else {
-          alert("取得可能なLaTeX式が見つかりません。");
           statusIndicator.textContent = "Expression not found.";
         }
-      });
+      }
 
       document.getElementById("clearInputBtn").addEventListener("click", () => {
         input.value = "";
@@ -157,6 +158,11 @@
           const latex = input.value.trim();
           calculator.setExpression({ id: selectedId, latex });
         }
+      });
+
+      calculator.observeEvent("change", () => {
+        updateSelectorOptions();
+        syncFromDesmos();
       });
 
       document.querySelectorAll(".tab-button").forEach(button => {
