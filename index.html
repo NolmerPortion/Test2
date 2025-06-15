@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Desmos + Greek Keyboard ver.5</title>
+  <title>Desmos + Greek Keyboard ver.6</title>
   <link rel="stylesheet" href="style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
@@ -49,7 +49,7 @@
   </style>
 </head>
 <body>
-  <h1>Desmos Graph + Greek Keyboard ver.5</h1>
+  <h1>Desmos Graph + Greek Keyboard ver.6</h1>
   <div id="calculator"></div>
 
   <div id="controlPanel">
@@ -129,13 +129,7 @@
         const latex = input.value.trim();
         if (lastId) {
           calculator.setExpression({ id: lastId, latex });
-        } else {
-          lastId = `expr${Date.now()}`;
-          calculator.setExpression({ id: lastId, latex });
         }
-        const expressions = calculator.getExpressions();
-        const targetIndex = expressions.findIndex(exp => exp.id === lastId);
-        statusIndicator.textContent = `Last expression ID: ${lastId} (Line ${targetIndex + 1})`;
       });
 
       calculator.observeEvent("change", () => {
@@ -145,20 +139,14 @@
           lastId = selected.id;
           input.value = selected.latex;
           const targetIndex = expressions.findIndex(exp => exp.id === lastId);
-          statusIndicator.textContent = `Auto-selected ID: ${lastId} (Line ${targetIndex + 1})`;
+          statusIndicator.textContent = `Selected ID: ${lastId} (Line ${targetIndex + 1})`;
         }
       });
 
       document.getElementById("sendBtn").addEventListener("click", () => {
         const latex = input.value.trim();
-        if (latex !== "") {
-          if (!lastId) {
-            lastId = `expr${Date.now()}`;
-          }
+        if (latex !== "" && lastId) {
           calculator.setExpression({ id: lastId, latex });
-          const expressions = calculator.getExpressions();
-          const targetIndex = expressions.findIndex(exp => exp.id === lastId);
-          statusIndicator.textContent = `Last expression ID: ${lastId} (Line ${targetIndex + 1})`;
         }
       });
 
