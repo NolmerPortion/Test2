@@ -2,25 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Desmos + Greek Keyboard ver.11</title>
+  <title>Desmos + Greek Keyboard ver.16</title>
   <link rel="stylesheet" href="style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
-  <style>
-    #calculator { width: 100%; height: 400px; }
-    #controlPanel { margin: 20px; }
-    textarea { width: 100%; font-size: 1.2em; padding: 8px; margin-bottom: 10px; }
-    .tab-button { margin: 2px; padding: 5px 10px; }
-    .tab-content { display: none; margin-top: 10px; }
-    .tab-content.active { display: flex; flex-wrap: wrap; }
-    #buttonPanel button { margin: 2px; padding: 5px 10px; font-size: 1em; }
-    #actionButtons button, select { margin: 5px; padding: 8px 16px; font-size: 1em; }
-    #statusIndicator { margin-top: 10px; font-weight: bold; }
-  </style>
 </head>
 <body>
-  <h1>Desmos Graph + Greek Keyboard ver.11</h1>
-  <div id="calculator"></div>
+  <div id="calculator" style="width: 100%; height: 400px;"></div>
 
   <div id="controlPanel">
     <textarea id="latexInput" rows="3" placeholder="LaTeX here..."></textarea>
@@ -31,40 +19,34 @@
     </div>
 
     <div id="tabs">
+      <button class="tab-button" data-tab="letters">Alphabet</button>
       <button class="tab-button" data-tab="greek">Greek</button>
       <button class="tab-button" data-tab="functions">Functions</button>
-      <button class="tab-button" data-tab="letters">Alphabet</button>
     </div>
 
     <div id="buttonPanel">
+      <div id="letters" class="tab-content">
+        <button id="shiftToggle">⇧ Shift</button>
+        <!-- Alphabet buttons will be dynamically injected here -->
+      </div>
+
       <div id="greek" class="tab-content">
-        <button data-insert="\\alpha">α</button><button data-insert="\\beta">β</button><button data-insert="\\gamma">γ</button>
-        <button data-insert="\\delta">δ</button><button data-insert="\\epsilon">ε</button><button data-insert="\\zeta">ζ</button>
-        <button data-insert="\\eta">η</button><button data-insert="\\theta">θ</button><button data-insert="\\iota">ι</button>
-        <button data-insert="\\kappa">κ</button><button data-insert="\\lambda">λ</button><button data-insert="\\mu">μ</button>
-        <button data-insert="\\nu">ν</button><button data-insert="\\xi">ξ</button><button data-insert="\\omicron">ο</button>
-        <button data-insert="\\pi">π</button><button data-insert="\\rho">ρ</button><button data-insert="\\sigma">σ</button>
-        <button data-insert="\\tau">τ</button><button data-insert="\\upsilon">υ</button><button data-insert="\\phi">φ</button>
-        <button data-insert="\\chi">χ</button><button data-insert="\\psi">ψ</button><button data-insert="\\omega">ω</button>
+        <!-- Greek buttons will be dynamically injected here -->
       </div>
 
       <div id="functions" class="tab-content">
-        <button data-insert="\\int_{}^{}">∫</button><button data-insert="\\sum_{}^{}">∑</button>
-        <button data-insert="\\prod_{}^{}">∏</button><button data-insert="\\frac{}{}">a/b</button>
-        <button data-insert="\\exp">exp</button><button data-insert="\\ln">ln</button>
-        <button data-insert="\\log">log</button><button data-insert="\\cos">cos</button>
-        <button data-insert="\\sin">sin</button><button data-insert="\\tan">tan</button>
-        <button data-insert="\\sinh">sinh</button><button data-insert="\\cosh">cosh</button>
-        <button data-insert="\\tanh">tanh</button><button data-insert="\\arcsin">arcsin</button>
-        <button data-insert="\\arccos">arccos</button><button data-insert="\\arctan">arctan</button>
-        <button data-insert="\\operatorname{arsinh}">arsinh</button>
-        <button data-insert="\\operatorname{arcosh}">arcosh</button>
-        <button data-insert="\\operatorname{artanh}">artanh</button>
-      </div>
-
-      <div id="letters" class="tab-content">
-        <button data-insert="a">a</button><button data-insert="b">b</button><button data-insert="c">c</button>
-        <button data-insert="x">x</button><button data-insert="y">y</button><button data-insert="z">z</button>
+        <button data-insert="\\int_{}^{}">∫</button>
+        <button data-insert="\\sum_{}^{}">∑</button>
+        <button data-insert="\\prod_{}^{}">∏</button>
+        <button data-insert="\\frac{}{}">a/b</button>
+        <button data-insert="\\exp">exp</button>
+        <button data-insert="\\ln">ln</button>
+        <button data-insert="\\log">log</button>
+        <button data-insert="\\cos">cos</button>
+        <button data-insert="\\sin">sin</button>
+        <button data-insert="\\tan">tan</button>
+        <button data-insert="\\left(\\right)">( )</button>
+        <button data-insert="{}">{ }</button>
       </div>
     </div>
 
@@ -82,144 +64,17 @@
   </div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const calculator = Desmos.GraphingCalculator(document.getElementById("calculator"));
-      const input = document.getElementById("latexInput");
-      const statusIndicator = document.getElementById("statusIndicator");
-      const expressionSelector = document.getElementById("expressionSelector");
-
-      let currentExpressionId = null;
-
-      function updateSelectorOptions() {
-        expressionSelector.innerHTML = "";
-        calculator.getExpressions().forEach((exp, idx) => {
-          const option = document.createElement("option");
-          option.value = exp.id;
-          option.textContent = `Line ${idx + 1}`;
-          if (exp.id === currentExpressionId) option.selected = true;
-          expressionSelector.appendChild(option);
-        });
-      }
-
-      expressionSelector.addEventListener("change", () => {
-        currentExpressionId = expressionSelector.value;
-        syncFromDesmos();
-      });
-
-      function syncFromDesmos() {
-        if (!currentExpressionId) return;
-        const expressions = calculator.getExpressions();
-        const target = expressions.find(exp => exp.id === currentExpressionId);
-        const index = expressions.findIndex(exp => exp.id === currentExpressionId);
-        if (target && target.latex) {
-          input.value = target.latex;
-          input.dispatchEvent(new Event("input"));
-          statusIndicator.textContent = `Loaded from ID: ${currentExpressionId} (Line ${index + 1})`;
-        } else {
-          statusIndicator.textContent = "Expression not found.";
-        }
-      }
-
-      document.getElementById("sendBtn").addEventListener("click", () => {
-        const latex = input.value.trim();
-        if (latex !== "" && currentExpressionId) {
-          calculator.setExpression({ id: currentExpressionId, latex });
-        }
-      });
-
-      document.getElementById("getBtn").addEventListener("click", syncFromDesmos);
-
-      document.getElementById("clearInputBtn").addEventListener("click", () => {
-        input.value = "";
-        input.focus();
-      });
-
-      document.getElementById("saveBtn").addEventListener("click", () => {
-        const state = calculator.getState();
-        localStorage.setItem("desmosGraphState", JSON.stringify(state));
-        alert("Graph state saved locally.");
-      });
-
-      document.getElementById("loadBtn").addEventListener("click", () => {
-        const saved = localStorage.getItem("desmosGraphState");
-        if (saved) {
-          calculator.setState(JSON.parse(saved));
-          updateSelectorOptions();
-        } else {
-          alert("No saved graph found in local storage.");
-        }
-      });
-
-      document.getElementById("exportBtn").addEventListener("click", () => {
-        const state = calculator.getState();
-        const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "desmos_graph.json";
-        a.click();
-        URL.revokeObjectURL(url);
-      });
-
-      document.getElementById("importBtn").addEventListener("click", () => {
-        document.getElementById("importFile").click();
-      });
-
-      document.getElementById("importFile").addEventListener("change", (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = () => {
-          const json = JSON.parse(reader.result);
-          calculator.setState(json);
-          updateSelectorOptions();
-        };
-        reader.readAsText(file);
-      });
-
-      input.addEventListener("input", () => {
-        if (currentExpressionId) {
-          const latex = input.value.trim();
-          calculator.setExpression({ id: currentExpressionId, latex });
-        }
-      });
-
-      calculator.observeEvent("change", () => {
-        updateSelectorOptions();
-      });
-
-      document.querySelectorAll(".tab-button").forEach(button => {
-        button.addEventListener("click", () => {
-          const target = button.getAttribute("data-tab");
-          document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
-          document.getElementById(target).classList.add("active");
-        });
-      });
-      document.getElementById("greek").classList.add("active");
-
-      document.querySelectorAll("#buttonPanel button").forEach(button => {
-        button.addEventListener("click", () => {
-          const insertText = JSON.parse('"' + button.getAttribute("data-insert") + '"');
-          insertAtCursor(input, insertText);
-          input.dispatchEvent(new Event("input"));
-        });
-      });
-
-      function insertAtCursor(textarea, text) {
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const value = textarea.value;
-        textarea.value = value.slice(0, start) + text + value.slice(end);
-        textarea.selectionStart = textarea.selectionEnd = start + text.length;
-        textarea.focus();
-      }
-
-      updateSelectorOptions();
-      if (expressionSelector.options.length > 0) {
-        currentExpressionId = expressionSelector.value;
-        syncFromDesmos();
+    // Track changes in Desmos and update textarea accordingly
+    const observer = new MutationObserver(() => {
+      const currentId = document.getElementById("expressionSelector").value;
+      const exp = calculator.getExpressions().find(e => e.id === currentId);
+      if (exp && exp.latex !== document.getElementById("latexInput").value) {
+        document.getElementById("latexInput").value = exp.latex;
       }
     });
+    observer.observe(document.getElementById("calculator"), { childList: true, subtree: true });
   </script>
+
+  <script src="script.js"></script>
 </body>
 </html>
