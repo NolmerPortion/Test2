@@ -8,56 +8,61 @@
   <script src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
 </head>
 <body>
-<div id="calculator" style="width: 100%; height: 400px;"></div>
+  <div id="calculator" style="width: 100%; height: 400px;"></div>
 
-<div id="controlPanel">
-  <textarea id="latexInput" rows="3" placeholder="LaTeX here..."></textarea>
+  <div id="controlPanel">
+    <textarea id="latexInput" rows="3" placeholder="LaTeX here..."></textarea>
 
-  <div>
-    <label for="expressionSelector">Select Expression Line:</label>
-    <select id="expressionSelector"></select>
-  </div>
-
-  <div id="tabs">
-    <button class="tab-button" data-tab="letters">Alphabet</button>
-    <button class="tab-button" data-tab="greek">Greek</button>
-    <button class="tab-button" data-tab="functions">Functions</button>
-  </div>
-
-  <div id="buttonPanel">
-    <div id="letters" class="tab-content active">
-      <button id="shiftToggle">⇧ Shift</button>
+    <div>
+      <label for="expressionSelector">Select Expression Line:</label>
+      <select id="expressionSelector"></select>
     </div>
-    <div id="greek" class="tab-content"></div>
-    <div id="functions" class="tab-content">
-      <button data-insert="\\int_{}^{}">∫</button>
-      <button data-insert="\\sum_{}^{}">∑</button>
-      <button data-insert="\\prod_{}^{}">∏</button>
-      <button data-insert="\\frac{}{}">a/b</button>
-      <button data-insert="\\exp">exp</button>
-      <button data-insert="\\ln">ln</button>
-      <button data-insert="\\log">log</button>
-      <button data-insert="\\cos">cos</button>
-      <button data-insert="\\sin">sin</button>
-      <button data-insert="\\tan">tan</button>
-      <button data-insert="\\left(\\right)">( )</button>
-      <button data-insert="{}">{ }</button>
+
+    <div id="tabs">
+      <button class="tab-button" data-tab="letters">Alphabet</button>
+      <button class="tab-button" data-tab="greek">Greek</button>
+      <button class="tab-button" data-tab="functions">Functions</button>
+    </div>
+
+    <div id="buttonPanel">
+      <div id="letters" class="tab-content active">
+        <button id="shiftToggle">⇧ Shift</button>
+        <!-- Alphabet buttons will be dynamically injected here -->
+      </div>
+
+      <div id="greek" class="tab-content">
+        <!-- Greek buttons will be dynamically injected here -->
+      </div>
+
+      <div id="functions" class="tab-content">
+        <button data-insert="\\int_{}^{}">∫</button>
+        <button data-insert="\\sum_{}^{}">∑</button>
+        <button data-insert="\\prod_{}^{}">∏</button>
+        <button data-insert="\\frac{}{}">a/b</button>
+        <button data-insert="\\exp">exp</button>
+        <button data-insert="\\ln">ln</button>
+        <button data-insert="\\log">log</button>
+        <button data-insert="\\cos">cos</button>
+        <button data-insert="\\sin">sin</button>
+        <button data-insert="\\tan">tan</button>
+        <button data-insert="\\left(\\right)">( )</button>
+        <button data-insert="{}">{ }</button>
+      </div>
+    </div>
+
+    <div id="actionButtons">
+      <button id="sendBtn">Send to Desmos</button>
+      <button id="getBtn">Get from Desmos</button>
+      <button id="clearInputBtn">Clear</button>
+      <button id="saveBtn">💾 Save to Local</button>
+      <button id="loadBtn">📥 Load from Local</button>
+      <button id="exportBtn">📤 Export JSON</button>
+      <input type="file" id="importFile" style="display:none">
+      <button id="importBtn">📁 Import JSON</button>
+      <div id="statusIndicator">No expression selected.</div>
     </div>
   </div>
 
-  <div id="actionButtons">
-    <button id="sendBtn">Send to Desmos</button>
-    <button id="getBtn">Get from Desmos</button>
-    <button id="clearInputBtn">Clear</button>
-    <button id="saveBtn">💾 Save to Local</button>
-    <button id="loadBtn">📥 Load from Local</button>
-    <button id="exportBtn">📤 Export JSON</button>
-    <input type="file" id="importFile" style="display:none">
-    <button id="importBtn">📁 Import JSON</button>
-    <div id="statusIndicator">No expression selected.</div>
-  </div>
-</div>
-
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
