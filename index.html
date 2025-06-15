@@ -14,7 +14,6 @@
   <div id="controlPanel">
     <textarea id="latexInput" rows="3" placeholder="LaTeX here..."></textarea>
     <div id="buttonPanel">
-      <!-- 必要なギリシャ文字や関数ボタンを追加可能 -->
       <button data-insert="\\alpha">α</button>
       <button data-insert="\\beta">β</button>
       <button data-insert="\\gamma">γ</button>
@@ -28,6 +27,66 @@
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const calculator = Desmos.GraphingCalculator(document.getElementById("calculator"));
+      const input = document.getElementById("latexInput");
+
+      const sendBtn = document.getElementById("sendBtn");
+      const clearInputBtn = document.getElementById("clearInputBtn");
+      const pullBtn = document.getElementById("pullBtn");
+
+      document.querySelectorAll("#buttonPanel button").forEach(button => {
+        button.addEventListener("click", () => {
+          const insertText = button.getAttribute("data-insert").replace(/^\\/, "\\");
+          insertAtCursor(input, insertText);
+        });
+      });
+
+      input.addEventListener("input", () => {
+        const latex = input.value.trim();
+        calculator.setExpression({ id: "live_preview", latex });
+      });
+
+      sendBtn.addEventListener("click", () => {
+        const latex = input.value.trim();
+        if (latex !== "") {
+          const id = `expr${Date.now()}`;
+          calculator.setExpression({ id, latex });
+        }
+      });
+
+      clearInputBtn.addEventListener("click", () => {
+        input.value = "";
+        calculator.removeExpression({ id: "live_preview" });
+        input.focus();
+      });
+
+      pullBtn.addEventListener("click", () => {
+        const expressions = calculator.getExpressions();
+        if (expressions.length === 0) {
+          alert("式が存在しません。");
+          return;
+        }
+
+        const lastExpr = expressions.reverse().find(expr => expr.id !== "live_preview" && expr.latex);
+        if (lastExpr) {
+          input.value = lastExpr.latex;
+          input.focus();
+        } else {
+          alert("取得可能なLaTeX式が見つかりません。");
+        }
+      });
+
+      function insertAtCursor(textarea, text) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const value = textarea.value;
+        textarea.value = value.slice(0, start) + text + value.slice(end);
+        textarea.selectionStart = textarea.selectionEnd = start + text.length;
+        textarea.focus();
+      }
+    });
+  </script>
 </body>
 </html>
