@@ -1,109 +1,95 @@
-const calculator = Desmos.GraphingCalculator(document.getElementById("calculator"));
-const latexInput = document.getElementById("latexInput");
-const selector = document.getElementById("expressionSelector");
-const indicator = document.getElementById("statusIndicator");
-
-let isShift = false;
-
-// アルファベットキーの生成
-function createAlphabetButtons() {
-  const container = document.getElementById("alphabetButtons");
-  container.innerHTML = "";
-  const base = isShift ? "A" : "a";
-  for (let i = 0; i < 26; i++) {
-    const char = String.fromCharCode(base.charCodeAt(0) + i);
-    const button = document.createElement("button");
-    button.textContent = char;
-    button.setAttribute("data-insert", char);
-    button.addEventListener("click", () => {
-      const insert = button.getAttribute("data-insert");
-      const start = latexInput.selectionStart;
-      const end = latexInput.selectionEnd;
-      latexInput.setRangeText(insert, start, end, "end");
-      syncToDesmos();
-      latexInput.focus();
-    });
-    container.appendChild(button);
-  }
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f5f5f5;
 }
 
-// 初回生成
-createAlphabetButtons();
-
-// Shift切替ボタン
-document.getElementById("shiftToggle").addEventListener("click", () => {
-  isShift = !isShift;
-  createAlphabetButtons();
-});
-
-function updateSelector() {
-  const expressions = calculator.getExpressions();
-  const currentId = selector.value;
-  selector.innerHTML = "";
-  expressions.forEach((e, i) => {
-    const opt = document.createElement("option");
-    opt.value = e.id;
-    opt.textContent = `Line ${i + 1}`;
-    selector.appendChild(opt);
-  });
-  if (expressions.find(e => e.id === currentId)) {
-    selector.value = currentId;
-  } else if (expressions.length > 0) {
-    selector.value = expressions[0].id;
-  }
+#calculator {
+  border-bottom: 2px solid #ccc;
 }
 
-function syncToDesmos() {
-  const id = selector.value;
-  if (!id) return;
-  calculator.setExpression({ id, latex: latexInput.value });
+#controlPanel {
+  padding: 10px;
+  background-color: #fff;
 }
 
-function updateFromDesmos() {
-  const expr = calculator.getExpressions().find(e => e.id === selector.value);
-  if (expr && expr.latex !== undefined) {
-    latexInput.value = expr.latex;
-    indicator.textContent = `Selected: ${selector.options[selector.selectedIndex].text}`;
-  }
+#latexInput {
+  width: 100%;
+  font-size: 1.2em;
+  margin-bottom: 10px;
 }
 
-selector.addEventListener("change", updateFromDesmos);
+#expressionSelector {
+  margin-bottom: 10px;
+  padding: 5px;
+  font-size: 1em;
+}
 
-document.getElementById("sendBtn").onclick = syncToDesmos;
-document.getElementById("getBtn").onclick = updateFromDesmos;
-document.getElementById("clearInputBtn").onclick = () => {
-  latexInput.value = "";
-  syncToDesmos();
-};
+#tabs {
+  margin-top: 10px;
+}
 
-calculator.observeEvent("change", () => {
-  updateSelector();
-  updateFromDesmos();
-});
+.tab-button {
+  padding: 8px 12px;
+  margin-right: 5px;
+  border: none;
+  background-color: #ddd;
+  cursor: pointer;
+}
 
-latexInput.addEventListener("input", syncToDesmos);
+.tab-button:hover {
+  background-color: #ccc;
+}
 
-// Greek/Function キーのイベント登録（alphabetButtons内のボタンは除外）
-document.querySelectorAll('[data-insert]').forEach(button => {
-  if (button.closest("#alphabetButtons")) return;
+.tab-content {
+  display: none;
+  margin-top: 10px;
+}
 
-  button.addEventListener("click", () => {
-    const insert = JSON.parse('"' + button.getAttribute("data-insert") + '"');
-    const start = latexInput.selectionStart;
-    const end = latexInput.selectionEnd;
-    latexInput.setRangeText(insert, start, end, "end");
-    syncToDesmos();
-    latexInput.focus();
-  });
-});
+.tab-content.active {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 
-document.querySelectorAll(".tab-button").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
-    document.getElementById(btn.dataset.tab).classList.add("active");
-  });
-});
+#buttonPanel button,
+#alphabetButtons button {
+  padding: 6px 10px;
+  font-size: 1em;
+  cursor: pointer;
+  background-color: #eee;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
 
-// 初期タブ・セレクタ設定
-document.querySelector(".tab-button[data-tab='letters']").click();
-updateSelector();
+#buttonPanel button:hover,
+#alphabetButtons button:hover {
+  background-color: #ddd;
+}
+
+#shiftToggle {
+  margin-bottom: 10px;
+  background-color: #cce;
+}
+
+#actionButtons {
+  margin-top: 15px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+#statusIndicator {
+  margin-top: 5px;
+  font-size: 0.9em;
+  color: #333;
+}
+
+#alphabetButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
