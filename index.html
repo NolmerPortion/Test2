@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Desmos + Greek Keyboard</title>
+  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=1024">
+  <script src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
+</head>
+<body>
+  <h1>Desmos Graph + Greek Keyboard</h1>
+  <div id="calculator"></div>
+
+  <div id="virtual-input-wrapper">
+    <div id="virtual-input" contenteditable="true" spellcheck="false"></div>
+    <div id="keyboard"></div>
+    <div id="actions">
+      <button id="clearBtn">Clear</button>
+      <button id="sendBtn">Send to Desmos</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
