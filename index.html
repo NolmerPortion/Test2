@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Desmos + Greek Keyboard ver.11</title>
-  <link rel="stylesheet" href="style.css" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <title>Desmos + Greek Keyboard ver.11 (Alphabet Patched)</title>
+  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
 </head>
 <body>
@@ -27,6 +27,7 @@
     <div id="buttonPanel">
       <div id="letters" class="tab-content">
         <button id="shiftToggle">⇧ Shift</button>
+        <div id="alphabetButtons"></div>
       </div>
 
       <div id="greek" class="tab-content">
@@ -67,7 +68,7 @@
         <button data-insert="\\cos">cos</button>
         <button data-insert="\\sin">sin</button>
         <button data-insert="\\tan">tan</button>
-        <button data-insert="\\left(\\right)">( )</button>
+        <button data-insert="\\left(\\right)">()</button>
         <button data-insert="{}">{ }</button>
       </div>
     </div>
@@ -85,85 +86,6 @@
     </div>
   </div>
 
-  <script>
-    const calculator = Desmos.GraphingCalculator(document.getElementById("calculator"));
-    const latexInput = document.getElementById("latexInput");
-    const selector = document.getElementById("expressionSelector");
-    const indicator = document.getElementById("statusIndicator");
-
-    function updateSelector() {
-      const expressions = calculator.getExpressions();
-      const currentId = selector.value;
-      selector.innerHTML = "";
-      expressions.forEach((e, i) => {
-        const opt = document.createElement("option");
-        opt.value = e.id;
-        opt.textContent = `Line ${i + 1}`;
-        selector.appendChild(opt);
-      });
-      if (expressions.find(e => e.id === currentId)) {
-        selector.value = currentId;
-      } else if (expressions.length > 0) {
-        selector.value = expressions[0].id;
-      }
-    }
-
-    function syncToDesmos() {
-      const id = selector.value;
-      if (!id) return;
-      calculator.setExpression({ id, latex: latexInput.value });
-    }
-
-    function updateFromDesmos() {
-      const expr = calculator.getExpressions().find(e => e.id === selector.value);
-      if (expr && expr.latex !== undefined) {
-        latexInput.value = expr.latex;
-        indicator.textContent = `Selected: ${selector.options[selector.selectedIndex].text}`;
-      }
-    }
-
-    selector.addEventListener("change", updateFromDesmos);
-    document.getElementById("sendBtn").onclick = syncToDesmos;
-    document.getElementById("getBtn").onclick = updateFromDesmos;
-    document.getElementById("clearInputBtn").onclick = () => {
-      latexInput.value = "";
-      syncToDesmos();
-    };
-
-    // 自動同期（Desmos側の選択変更を検出）
-    calculator.observeEvent("change", () => {
-      updateSelector();
-
-      const focusedId = calculator.getState().selectedExpressionId;
-      if (focusedId) {
-        selector.value = focusedId;
-      }
-
-      updateFromDesmos();
-    });
-
-    latexInput.addEventListener("input", syncToDesmos);
-
-    document.querySelectorAll('[data-insert]').forEach(button => {
-      button.addEventListener("click", () => {
-        const insert = JSON.parse('"' + button.getAttribute("data-insert") + '"');
-        const start = latexInput.selectionStart;
-        const end = latexInput.selectionEnd;
-        latexInput.setRangeText(insert, start, end, "end");
-        syncToDesmos();
-        latexInput.focus();
-      });
-    });
-
-    document.querySelectorAll(".tab-button").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
-        document.getElementById(btn.dataset.tab).classList.add("active");
-      });
-    });
-
-    document.querySelector(".tab-button[data-tab='letters']").click();
-    updateSelector();
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
