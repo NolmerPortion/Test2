@@ -1,181 +1,185 @@
-const calculator = Desmos.GraphingCalculator(document.getElementById("calculator"));
-const latexInput = document.getElementById("latexInput");
-const expressionSelector = document.getElementById("expressionSelector");
+const calculator = Desmos.GraphingCalculator(document.getElementById('calculator'), {
+  keypad: false
+});
+
+const input = document.getElementById("latexInput");
 const sendBtn = document.getElementById("sendBtn");
 const getBtn = document.getElementById("getBtn");
-const saveBtn = document.getElementById("saveBtn");
-const loadBtn = document.getElementById("loadBtn");
-const exportBtn = document.getElementById("exportBtn");
-const importBtn = document.getElementById("importBtn");
-const importFile = document.getElementById("importFile");
-const clearInputBtn = document.getElementById("clearInputBtn");
+const shiftToggle = document.getElementById("shiftToggle");
+const expressionSelector = document.getElementById("expressionSelector");
 const statusIndicator = document.getElementById("statusIndicator");
 
-let selectedId = null;
-let shiftActive = false;
+let isShift = false;
+let currentId = null;
 
 function updateExpressionSelector() {
-  expressionSelector.innerHTML = "";
   const expressions = calculator.getExpressions();
-  expressions.forEach(expr => {
-    if (expr.latex !== undefined) {
+  expressionSelector.innerHTML = '';
+  expressions.forEach((exp, index) => {
+    if (exp.id) {
       const option = document.createElement("option");
-      option.value = expr.id;
-      option.textContent = `${expr.id}`;
+      option.value = exp.id;
+      option.text = `Line ${index + 1} (${exp.id})`;
       expressionSelector.appendChild(option);
     }
   });
+  if (expressions.length > 0) {
+    currentId = expressions[0].id;
+    expressionSelector.value = currentId;
+    statusIndicator.textContent = `Editing: ${currentId}`;
+  }
 }
+updateExpressionSelector();
 
 expressionSelector.addEventListener("change", () => {
-  selectedId = expressionSelector.value;
-  updateStatus();
-  const expr = calculator.getExpressions().find(e => e.id === selectedId);
-  if (expr && expr.latex !== undefined) {
-    latexInput.value = expr.latex;
+  currentId = expressionSelector.value;
+  const exp = calculator.getExpressions().find(e => e.id === currentId);
+  if (exp) {
+    input.value = exp.latex || "";
+    statusIndicator.textContent = `Editing: ${currentId}`;
   }
 });
 
-function updateStatus() {
-  if (selectedId) {
-    statusIndicator.textContent = `Selected ID: ${selectedId}`;
-  } else {
-    statusIndicator.textContent = "No expression selected.";
-  }
-}
-
 sendBtn.addEventListener("click", () => {
-  if (!selectedId) {
-    const newId = `line${Date.now()}`;
-    calculator.setExpression({ id: newId, latex: latexInput.value });
-    selectedId = newId;
+  const latex = input.value;
+  if (!currentId) {
+    currentId = 'custom' + Date.now();
+    calculator.setExpression({ id: currentId, latex });
     updateExpressionSelector();
-    expressionSelector.value = selectedId;
   } else {
-    calculator.setExpression({ id: selectedId, latex: latexInput.value });
+    calculator.setExpression({ id: currentId, latex });
   }
-  updateStatus();
 });
 
 getBtn.addEventListener("click", () => {
-  if (!selectedId) {
+  if (!currentId) {
     alert("No expression selected.");
     return;
   }
-  const expr = calculator.getExpressions().find(e => e.id === selectedId);
-  if (expr && expr.latex !== undefined) {
-    latexInput.value = expr.latex;
+  const exp = calculator.getExpressions().find(e => e.id === currentId);
+  if (exp && exp.latex) {
+    input.value = exp.latex;
   } else {
-    alert("No LaTeX expression found.");
+    alert("No LaTeX found for selected expression.");
   }
 });
 
 calculator.observeEvent('change', () => {
-  if (!selectedId) return;
-  const expr = calculator.getExpressions().find(e => e.id === selectedId);
-  if (expr && expr.latex !== undefined) {
-    latexInput.value = expr.latex;
+  if (!currentId) return;
+  const exp = calculator.getExpressions().find(e => e.id === currentId);
+  if (exp && exp.latex !== input.value) {
+    input.value = exp.latex;
   }
 });
 
-saveBtn.addEventListener("click", () => {
-  const state = calculator.getState();
-  localStorage.setItem("desmosState", JSON.stringify(state));
-  alert("State saved to localStorage.");
-});
+// TAB + BUTTON INJECTION
+const tabs = document.querySelectorAll('.tab-button');
+const tabContents = document.querySelectorAll('.tab-content');
 
-loadBtn.addEventListener("click", () => {
-  const state = localStorage.getItem("desmosState");
-  if (state) {
-    calculator.setState(JSON.parse(state));
-    updateExpressionSelector();
-    updateStatus();
-  }
-});
-
-exportBtn.addEventListener("click", () => {
-  const state = calculator.getState();
-  const blob = new Blob([JSON.stringify(state)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "desmos_state.json";
-  a.click();
-  URL.revokeObjectURL(url);
-});
-
-importBtn.addEventListener("click", () => {
-  importFile.click();
-});
-
-importFile.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function (event) {
-    const json = JSON.parse(event.target.result);
-    calculator.setState(json);
-    updateExpressionSelector();
-    updateStatus();
-  };
-  reader.readAsText(file);
-});
-
-clearInputBtn.addEventListener("click", () => {
-  latexInput.value = "";
-});
-
-const tabs = document.querySelectorAll(".tab-button");
-const tabContents = document.querySelectorAll(".tab-content");
-tabs.forEach(tab => {
-  tab.addEventListener("click", () => {
-    tabs.forEach(t => t.classList.remove("active"));
-    tab.classList.add("active");
-    const target = tab.getAttribute("data-tab");
-    tabContents.forEach(content => {
-      content.classList.toggle("active", content.id === target);
-    });
+tabs.forEach(btn => {
+  btn.addEventListener('click', () => {
+    tabs.forEach(t => t.classList.remove('active'));
+    tabContents.forEach(tc => tc.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
   });
 });
-tabs[0].click(); // default tab
+tabs[0].click();
 
-const letters = "abcdefghijklmnopqrstuvwxyz".split("");
-const greekLetters = [
+// Insert character
+function insertAtCursor(text) {
+  const start = input.selectionStart;
+  const end = input.selectionEnd;
+  input.value = input.value.slice(0, start) + text + input.value.slice(end);
+  input.selectionStart = input.selectionEnd = start + text.length;
+  input.focus();
+  sendBtn.click();
+}
+
+// Shift toggle
+shiftToggle.addEventListener("click", () => {
+  isShift = !isShift;
+  updateAlphabetButtons();
+  shiftToggle.classList.toggle("active", isShift);
+});
+
+// Alphabet
+function updateAlphabetButtons() {
+  const container = document.getElementById("letters");
+  container.querySelectorAll("button[data-letter]").forEach(btn => btn.remove());
+
+  for (let i = 97; i <= 122; i++) {
+    const ch = String.fromCharCode(isShift ? i - 32 : i);
+    const btn = document.createElement("button");
+    btn.textContent = ch;
+    btn.dataset.letter = ch;
+    btn.addEventListener("click", () => insertAtCursor(ch));
+    container.appendChild(btn);
+  }
+}
+updateAlphabetButtons();
+
+// Greek
+const greek = [
   "alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta",
   "iota", "kappa", "lambda", "mu", "nu", "xi", "omicron", "pi", "rho",
   "sigma", "tau", "upsilon", "phi", "chi", "psi", "omega"
 ];
-
-function renderButtons(containerId, items, isGreek = false) {
-  const container = document.getElementById(containerId);
-  items.forEach(item => {
-    const button = document.createElement("button");
-    let value = isGreek ? `\\${item}` : item;
-    button.textContent = shiftActive && !isGreek ? item.toUpperCase() : item;
-    button.setAttribute("data-insert", value);
-    container.appendChild(button);
-  });
-}
-
-renderButtons("letters", letters);
-renderButtons("greek", greekLetters, true);
-
-document.getElementById("shiftToggle").addEventListener("click", () => {
-  shiftActive = !shiftActive;
-  const letterContainer = document.getElementById("letters");
-  letterContainer.innerHTML = '<button id="shiftToggle">⇧ Shift</button>';
-  renderButtons("letters", letters);
+const greekContainer = document.getElementById("greek");
+greek.forEach(name => {
+  const btn = document.createElement("button");
+  btn.textContent = name;
+  btn.setAttribute("data-insert", `\\${name}`);
+  greekContainer.appendChild(btn);
 });
 
-document.getElementById("buttonPanel").addEventListener("click", e => {
-  if (e.target.tagName === "BUTTON" && e.target.hasAttribute("data-insert")) {
-    const raw = e.target.getAttribute("data-insert");
-    const insertText = JSON.parse('"' + raw + '"'); // prevent double backslash
-    const cursorPos = latexInput.selectionStart;
-    const before = latexInput.value.substring(0, cursorPos);
-    const after = latexInput.value.substring(cursorPos);
-    latexInput.value = before + insertText + after;
-    latexInput.focus();
-    latexInput.selectionStart = latexInput.selectionEnd = cursorPos + insertText.length;
+// Function insert
+document.querySelectorAll('[data-insert]').forEach(button => {
+  const raw = button.getAttribute("data-insert");
+  const text = JSON.parse(`"${raw}"`);
+  button.addEventListener("click", () => insertAtCursor(text));
+});
+
+// Save/load/export/import
+document.getElementById("saveBtn").addEventListener("click", () => {
+  const state = calculator.getState();
+  localStorage.setItem("desmos_state", JSON.stringify(state));
+  alert("Saved to local storage.");
+});
+
+document.getElementById("loadBtn").addEventListener("click", () => {
+  const state = localStorage.getItem("desmos_state");
+  if (state) {
+    calculator.setState(JSON.parse(state));
+    updateExpressionSelector();
+    alert("Loaded from local storage.");
   }
+});
+
+document.getElementById("exportBtn").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(calculator.getState(), null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "desmos_graph.json";
+  a.click();
+});
+
+document.getElementById("importBtn").addEventListener("click", () => {
+  document.getElementById("importFile").click();
+});
+document.getElementById("importFile").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      calculator.setState(data);
+      updateExpressionSelector();
+      alert("Imported successfully.");
+    } catch {
+      alert("Invalid file format.");
+    }
+  };
+  reader.readAsText(file);
 });
