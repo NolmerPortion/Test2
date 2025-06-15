@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Desmos + Greek Keyboard ver.6</title>
+  <title>Desmos + Greek Keyboard ver.7</title>
   <link rel="stylesheet" href="style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
@@ -37,7 +37,7 @@
       padding: 5px 10px;
       font-size: 1em;
     }
-    #actionButtons button {
+    #actionButtons button, select {
       margin: 5px;
       padding: 8px 16px;
       font-size: 1em;
@@ -49,11 +49,16 @@
   </style>
 </head>
 <body>
-  <h1>Desmos Graph + Greek Keyboard ver.6</h1>
+  <h1>Desmos Graph + Greek Keyboard ver.7</h1>
   <div id="calculator"></div>
 
   <div id="controlPanel">
     <textarea id="latexInput" rows="3" placeholder="LaTeX here..."></textarea>
+
+    <div>
+      <label for="expressionSelector">Select Expression Line:</label>
+      <select id="expressionSelector"></select>
+    </div>
 
     <div id="tabs">
       <button class="tab-button" data-tab="greek">Greek</button>
@@ -106,7 +111,53 @@
       const calculator = Desmos.GraphingCalculator(document.getElementById("calculator"));
       const input = document.getElementById("latexInput");
       const statusIndicator = document.getElementById("statusIndicator");
-      let lastId = null;
+      const expressionSelector = document.getElementById("expressionSelector");
+
+      function updateSelectorOptions() {
+        expressionSelector.innerHTML = "";
+        calculator.getExpressions().forEach((exp, idx) => {
+          const option = document.createElement("option");
+          option.value = exp.id;
+          option.textContent = `Line ${idx + 1}`;
+          expressionSelector.appendChild(option);
+        });
+      }
+
+      document.getElementById("sendBtn").addEventListener("click", () => {
+        const latex = input.value.trim();
+        const selectedId = expressionSelector.value;
+        if (latex !== "" && selectedId) {
+          calculator.setExpression({ id: selectedId, latex });
+        }
+      });
+
+      document.getElementById("getBtn").addEventListener("click", () => {
+        const selectedId = expressionSelector.value;
+        const expressions = calculator.getExpressions();
+        const target = expressions.find(exp => exp.id === selectedId);
+        const targetIndex = expressions.findIndex(exp => exp.id === selectedId);
+        if (target && target.latex) {
+          input.value = target.latex;
+          input.dispatchEvent(new Event("input"));
+          statusIndicator.textContent = `Loaded from ID: ${selectedId} (Line ${targetIndex + 1})`;
+        } else {
+          alert("取得可能なLaTeX式が見つかりません。");
+          statusIndicator.textContent = "Expression not found.";
+        }
+      });
+
+      document.getElementById("clearInputBtn").addEventListener("click", () => {
+        input.value = "";
+        input.focus();
+      });
+
+      input.addEventListener("input", () => {
+        const selectedId = expressionSelector.value;
+        if (selectedId) {
+          const latex = input.value.trim();
+          calculator.setExpression({ id: selectedId, latex });
+        }
+      });
 
       document.querySelectorAll(".tab-button").forEach(button => {
         button.addEventListener("click", () => {
@@ -125,58 +176,6 @@
         });
       });
 
-      input.addEventListener("input", () => {
-        const latex = input.value.trim();
-        if (lastId) {
-          calculator.setExpression({ id: lastId, latex });
-        }
-      });
-
-      calculator.observeEvent("change", () => {
-        const expressions = calculator.getExpressions();
-        const selected = expressions.find(exp => exp.latex && calculator.getExpression(exp.id).isSelected);
-        if (selected) {
-          lastId = selected.id;
-          input.value = selected.latex;
-          const targetIndex = expressions.findIndex(exp => exp.id === lastId);
-          statusIndicator.textContent = `Selected ID: ${lastId} (Line ${targetIndex + 1})`;
-        }
-      });
-
-      document.getElementById("sendBtn").addEventListener("click", () => {
-        const latex = input.value.trim();
-        if (latex !== "" && lastId) {
-          calculator.setExpression({ id: lastId, latex });
-        }
-      });
-
-      document.getElementById("getBtn").addEventListener("click", () => {
-        if (!lastId) {
-          statusIndicator.textContent = "No expression ID recorded.";
-          alert("取得可能なLaTeX式が見つかりません。");
-          return;
-        }
-        const expressions = calculator.getExpressions();
-        const target = expressions.find(exp => exp.id === lastId);
-        const targetIndex = expressions.findIndex(exp => exp.id === lastId);
-        if (target && target.latex) {
-          input.value = target.latex;
-          input.dispatchEvent(new Event("input"));
-          statusIndicator.textContent = `Loaded from ID: ${lastId} (Line ${targetIndex + 1})`;
-        } else {
-          alert("取得可能なLaTeX式が見つかりません。");
-          statusIndicator.textContent = "Expression not found.";
-        }
-      });
-
-      document.getElementById("clearInputBtn").addEventListener("click", () => {
-        input.value = "";
-        if (lastId) calculator.removeExpression({ id: lastId });
-        lastId = null;
-        statusIndicator.textContent = "No expression selected.";
-        input.focus();
-      });
-
       function insertAtCursor(textarea, text) {
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
@@ -185,6 +184,9 @@
         textarea.selectionStart = textarea.selectionEnd = start + text.length;
         textarea.focus();
       }
+
+      calculator.observeEvent("change", updateSelectorOptions);
+      updateSelectorOptions();
     });
   </script>
 </body>
