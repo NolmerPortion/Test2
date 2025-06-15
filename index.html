@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Desmos + Greek Keyboard ver.1</title>
+  <title>Desmos + Greek Keyboard ver.2</title>
   <link rel="stylesheet" href="style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
@@ -49,7 +49,7 @@
   </style>
 </head>
 <body>
-  <h1>Desmos Graph + Greek Keyboard ver.1</h1>
+  <h1>Desmos Graph + Greek Keyboard ver.2</h1>
   <div id="calculator"></div>
 
   <div id="controlPanel">
@@ -138,7 +138,9 @@
         if (latex !== "") {
           lastId = `expr${Date.now()}`;
           calculator.setExpression({ id: lastId, latex });
-          statusIndicator.textContent = `Last expression ID: ${lastId}`;
+          const expressions = calculator.getExpressions();
+          const targetIndex = expressions.findIndex(exp => exp.id === lastId);
+          statusIndicator.textContent = `Last expression ID: ${lastId} (Line ${targetIndex + 1})`;
         }
       });
 
@@ -150,10 +152,11 @@
         }
         const expressions = calculator.getExpressions();
         const target = expressions.find(exp => exp.id === lastId);
+        const targetIndex = expressions.findIndex(exp => exp.id === lastId);
         if (target && target.latex) {
           input.value = target.latex;
           input.dispatchEvent(new Event("input"));
-          statusIndicator.textContent = `Loaded from ID: ${lastId}`;
+          statusIndicator.textContent = `Loaded from ID: ${lastId} (Line ${targetIndex + 1})`;
         } else {
           alert("取得可能なLaTeX式が見つかりません。");
           statusIndicator.textContent = "Expression not found.";
