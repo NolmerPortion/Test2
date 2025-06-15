@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Desmos + Greek Keyboard ver.11</title>
-  <link rel="stylesheet" href="style.css">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
 </head>
 <body>
@@ -123,7 +123,6 @@
     }
 
     selector.addEventListener("change", updateFromDesmos);
-
     document.getElementById("sendBtn").onclick = syncToDesmos;
     document.getElementById("getBtn").onclick = updateFromDesmos;
     document.getElementById("clearInputBtn").onclick = () => {
@@ -131,8 +130,15 @@
       syncToDesmos();
     };
 
+    // 自動同期（Desmos側の選択変更を検出）
     calculator.observeEvent("change", () => {
       updateSelector();
+
+      const focusedId = calculator.getState().selectedExpressionId;
+      if (focusedId) {
+        selector.value = focusedId;
+      }
+
       updateFromDesmos();
     });
 
