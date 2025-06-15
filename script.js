@@ -1,64 +1,70 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const calculator = Desmos.GraphingCalculator(document.getElementById('calculator'));
+  const calculator = Desmos.GraphingCalculator(document.getElementById("calculator"));
+  const input = document.getElementById("latexInput");
 
-  const greekLetters = [
-    ['alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta', 'iota', 'kappa',
-     'lambda', 'mu', 'nu', 'xi', 'omicron', 'pi', 'rho', 'sigma', 'tau', 'upsilon',
-     'phi', 'chi', 'psi', 'omega'],
-    ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Eta', 'Theta', 'Iota', 'Kappa',
-     'Lambda', 'Mu', 'Nu', 'Xi', 'Omicron', 'Pi', 'Rho', 'Sigma', 'Tau', 'Upsilon',
-     'Phi', 'Chi', 'Psi', 'Omega']
-  ];
+  const sendBtn = document.getElementById("sendBtn");
+  const clearInputBtn = document.getElementById("clearInputBtn");
+  const pullBtn = document.getElementById("pullBtn");
 
-  let shift = false;
-  const virtualInput = document.getElementById("virtual-input");
-  const keyboardDiv = document.getElementById("keyboard");
-
-  function renderKeyboard() {
-    keyboardDiv.innerHTML = "";
-    const letters = shift ? greekLetters[1] : greekLetters[0];
-    letters.forEach(letter => {
-      const button = document.createElement("button");
-      button.textContent = letter;
-      const latex = `\\${letter}`;
-      button.addEventListener("click", () => {
-        insertAtCursor(virtualInput, latex);
-      });
-      keyboardDiv.appendChild(button);
+  // 挿入ボタン処理（ギリシャ文字など）
+  document.querySelectorAll("#buttonPanel button").forEach(button => {
+    button.addEventListener("click", () => {
+      const insertText = button.getAttribute("data-insert");
+      insertAtCursor(input, insertText);
     });
-
-    // Shift toggle button
-    const shiftButton = document.createElement("button");
-    shiftButton.textContent = shift ? "Shift ON" : "Shift OFF";
-    shiftButton.addEventListener("click", () => {
-      shift = !shift;
-      renderKeyboard();
-    });
-    keyboardDiv.appendChild(shiftButton);
-  }
-
-  function insertAtCursor(el, text) {
-    el.focus();
-    const selection = window.getSelection();
-    const range = selection.getRangeAt(0);
-    range.deleteContents();
-    range.insertNode(document.createTextNode(text));
-    // Move cursor to after inserted text
-    range.setStartAfter(range.endContainer);
-    range.collapse(true);
-    selection.removeAllRanges();
-    selection.addRange(range);
-  }
-
-  document.getElementById("sendBtn").addEventListener("click", () => {
-    const latex = virtualInput.textContent;
-    const exprId = `expr${Date.now()}`;
-    calculator.setExpression({ id: exprId, latex });
   });
 
-  document.getElementById("clearBtn").addEventListener("click", () => {
-    virtualInput.innerHTML = '';
+  // ライブプレビュー（リアルタイム更新）
+  input.addEventListener("input", () => {
+    const latex = input.value.trim();
+    const selected = calculator.getSelectedExpression();
+    if (selected && selected.id) {
+      calculator.setExpression({ id: selected.id, latex });
+    } else {
+      calculator.setExpression({ id: "live_preview", latex });
+    }
   });
 
-  renderKeyboard();
+  // Desmosに送信（選択中の行があれば上書き、なければ新規作成）
+  sendBtn.addEventListener("click", () => {
+    const latex = input.value.trim();
+    if (latex === "") return;
+
+    const selected = calculator.getSelectedExpression();
+    if (selected && selected.id) {
+      calculator.setExpression({ id: selected.id, latex });
+    } else {
+      const id = "expr" + Date.now();
+      calculator.setExpression({ id, latex });
+      calculator.setSelectedExpression({ id });
+    }
+  });
+
+  // Clear入力欄とプレビュー式
+  clearInputBtn.addEventListener("click", () => {
+    input.value = "";
+    calculator.removeExpression({ id: "live_preview" });
+    input.focus();
+  });
+
+  // Desmosから取得（選択中の式を入力欄に）
+  pullBtn.addEventListener("click", () => {
+    const selected = calculator.getSelectedExpression();
+    if (selected && typeof selected.latex === "string") {
+      input.value = selected.latex;
+      input.focus();
+    } else {
+      alert("数式ラインが選択されていません。");
+    }
+  });
+
+  // テキストエリア内のカーソル位置に文字を挿入
+  function insertAtCursor(textarea, text) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const value = textarea.value;
+    textarea.value = value.slice(0, start) + text + value.slice(end);
+    textarea.selectionStart = textarea.selectionEnd = start + text.length;
+    textarea.focus();
+  }
 });
