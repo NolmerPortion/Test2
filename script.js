@@ -6,24 +6,28 @@ const getBtn = document.getElementById("getBtn");
 const selector = document.getElementById("expressionSelector");
 const indicator = document.getElementById("statusIndicator");
 
-// Tabs
-document.querySelectorAll(".tab-button").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
-    document.getElementById(btn.dataset.tab).classList.add("active");
-  });
-});
+// 安全なバックスラッシュ変換関数
+function parseLatexInsert(raw) {
+  return raw.replace(/\\\\/g, "\\");
+}
 
-// Insert character with escape fix
-document.querySelectorAll('[data-insert]').forEach(button => {
-  button.addEventListener('click', () => {
-    const insertText = JSON.parse('"' + button.getAttribute("data-insert") + '"');
-    const start = latexInput.selectionStart;
-    const end = latexInput.selectionEnd;
-    latexInput.setRangeText(insertText, start, end, "end");
-    syncToDesmos();
+// 挿入ボタン処理（全タブ共通）
+function setupInsertButtons() {
+  document.querySelectorAll('[data-insert]').forEach(button => {
+    button.addEventListener('click', () => {
+      const raw = button.getAttribute("data-insert");
+      const insertText = parseLatexInsert(raw);
+      const start = latexInput.selectionStart;
+      const end = latexInput.selectionEnd;
+      latexInput.setRangeText(insertText, start, end, "end");
+      latexInput.focus();
+      syncToDesmos();
+    });
   });
-});
+}
+
+// リアルタイム送信
+latexInput.addEventListener("input", syncToDesmos);
 
 function syncToDesmos() {
   const id = selector.value;
@@ -31,10 +35,7 @@ function syncToDesmos() {
   calculator.setExpression({ id, latex: latexInput.value });
 }
 
-// Real-time update from input
-latexInput.addEventListener("input", syncToDesmos);
-
-// Update selector list
+// 選択セレクタ更新
 function updateExpressionSelector() {
   const expressions = calculator.getExpressions();
   selector.innerHTML = "";
@@ -50,7 +51,7 @@ function updateExpressionSelector() {
   }
 }
 
-// Update input from Desmos
+// Desmosから取得
 function updateLatexInputFromDesmos() {
   const id = selector.value;
   const expr = calculator.getExpressions().find(e => e.id === id);
@@ -62,43 +63,35 @@ function updateLatexInputFromDesmos() {
   }
 }
 
-// Listen for manual Desmos edits
+// イベント監視
 calculator.observeEvent('change', () => {
   updateExpressionSelector();
   updateLatexInputFromDesmos();
 });
 
-// Send button
+// ボタンイベント
 sendBtn.addEventListener("click", syncToDesmos);
-
-// Get button
 getBtn.addEventListener("click", updateLatexInputFromDesmos);
 
-// Clear input
 document.getElementById("clearInputBtn").addEventListener("click", () => {
   latexInput.value = "";
   syncToDesmos();
 });
 
-// Save to local
 document.getElementById("saveBtn").addEventListener("click", () => {
   const state = calculator.getState();
   localStorage.setItem("desmos-graph", JSON.stringify(state));
-  alert("Graph saved to local storage.");
+  alert("Saved to Local Storage.");
 });
 
-// Load from local
 document.getElementById("loadBtn").addEventListener("click", () => {
   const json = localStorage.getItem("desmos-graph");
   if (json) {
     calculator.setState(JSON.parse(json));
     updateExpressionSelector();
-  } else {
-    alert("No saved graph found.");
   }
 });
 
-// Export JSON
 document.getElementById("exportBtn").addEventListener("click", () => {
   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(calculator.getState()));
   const downloadAnchor = document.createElement("a");
@@ -107,7 +100,6 @@ document.getElementById("exportBtn").addEventListener("click", () => {
   downloadAnchor.click();
 });
 
-// Import JSON
 document.getElementById("importBtn").addEventListener("click", () => {
   document.getElementById("importFile").click();
 });
@@ -124,61 +116,16 @@ document.getElementById("importFile").addEventListener("change", (event) => {
   reader.readAsText(file);
 });
 
-// Keyboard: Shift toggle
-let shiftOn = false;
-const shiftBtn = document.getElementById("shiftToggle");
-shiftBtn.addEventListener("click", () => {
-  shiftOn = !shiftOn;
-  renderLetters();
+// タブ切り替え
+document.querySelectorAll(".tab-button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
+    const target = btn.getAttribute("data-tab");
+    document.getElementById(target).classList.add("active");
+  });
 });
 
-function renderLetters() {
-  const container = document.getElementById("letters");
-  const chars = "abcdefghijklmnopqrstuvwxyz".split("");
-  container.innerHTML = "";
-  container.appendChild(shiftBtn);
-  chars.forEach(ch => {
-    const btn = document.createElement("button");
-    btn.setAttribute("data-insert", shiftOn ? ch.toUpperCase() : ch);
-    btn.textContent = shiftOn ? ch.toUpperCase() : ch;
-    container.appendChild(btn);
-  });
-  document.querySelectorAll('#letters [data-insert]').forEach(button => {
-    button.addEventListener('click', () => {
-      const insertText = JSON.parse('"' + button.getAttribute("data-insert") + '"');
-      const start = latexInput.selectionStart;
-      const end = latexInput.selectionEnd;
-      latexInput.setRangeText(insertText, start, end, "end");
-      syncToDesmos();
-    });
-  });
-}
+document.querySelector('.tab-button[data-tab="letters"]').click();
 
-function renderGreek() {
-  const greek = [
-    "\\alpha", "\\beta", "\\gamma", "\\delta", "\\epsilon", "\\zeta",
-    "\\eta", "\\theta", "\\iota", "\\kappa", "\\lambda", "\\mu", "\\nu",
-    "\\xi", "\\omicron", "\\pi", "\\rho", "\\sigma", "\\tau", "\\upsilon",
-    "\\phi", "\\chi", "\\psi", "\\omega"
-  ];
-  const container = document.getElementById("greek");
-  greek.forEach(symbol => {
-    const btn = document.createElement("button");
-    btn.setAttribute("data-insert", symbol);
-    btn.textContent = symbol.replace("\\", "");
-    container.appendChild(btn);
-  });
-  document.querySelectorAll('#greek [data-insert]').forEach(button => {
-    button.addEventListener('click', () => {
-      const insertText = JSON.parse('"' + button.getAttribute("data-insert") + '"');
-      const start = latexInput.selectionStart;
-      const end = latexInput.selectionEnd;
-      latexInput.setRangeText(insertText, start, end, "end");
-      syncToDesmos();
-    });
-  });
-}
-
-renderLetters();
-renderGreek();
+setupInsertButtons();
 updateExpressionSelector();
