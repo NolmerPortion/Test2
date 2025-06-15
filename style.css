@@ -1,33 +1,49 @@
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+#calculator {
+  border-bottom: 1px solid #ccc;
+}
+
 #controlPanel {
   padding: 10px;
-  background: #f4f4f4;
-  border-top: 1px solid #ccc;
 }
 
 #latexInput {
   width: 100%;
-  font-size: 1.2em;
   margin-bottom: 10px;
 }
 
-#buttonPanel button {
-  margin: 2px;
-  padding: 6px 10px;
-  font-size: 1em;
-}
-
-#actionButtons button {
-  margin: 5px 3px;
+#buttonPanel {
+  margin-bottom: 10px;
 }
 
 .tab-content {
   display: none;
+  margin-bottom: 10px;
 }
 
 .tab-content.active {
-  display: block;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
 }
 
-#tabs {
-  margin-bottom: 10px;
+button {
+  margin: 2px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+#actionButtons {
+  margin-top: 10px;
+}
+
+#statusIndicator {
+  margin-top: 10px;
+  font-size: 0.9em;
+  color: #333;
 }
