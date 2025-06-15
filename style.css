@@ -2,85 +2,51 @@ body {
   font-family: sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #f4f4f4;
 }
 
 #controlPanel {
-  padding: 10px;
-  background-color: #ffffff;
-  border-top: 1px solid #ccc;
+  padding: 1em;
+  background-color: #f8f9fa;
 }
 
-#latexInput {
+textarea {
   width: 100%;
-  font-size: 16px;
-  padding: 8px;
-  margin-bottom: 10px;
-  box-sizing: border-box;
+  font-size: 1.2em;
+  margin-bottom: 0.5em;
 }
 
-#buttonPanel {
-  margin-top: 10px;
+button {
+  margin: 0.2em;
+  padding: 0.5em 1em;
+  font-size: 1em;
+  cursor: pointer;
+}
+
+#tabs {
+  margin-bottom: 0.5em;
 }
 
 .tab-content {
   display: none;
   flex-wrap: wrap;
-  gap: 5px;
-  margin-bottom: 10px;
+  gap: 4px;
 }
 
 .tab-content button {
-  padding: 5px 10px;
-  font-size: 14px;
-  border-radius: 4px;
-  border: 1px solid #999;
-  background-color: #f0f0f0;
-  cursor: pointer;
+  flex: 0 0 auto;
+  min-width: 2.5em;
 }
 
-.tab-content button:hover {
-  background-color: #d0e6ff;
-}
-
-.tab-button {
-  margin-right: 5px;
-  padding: 5px 12px;
-  border-radius: 4px;
-  border: none;
-  background-color: #ddd;
-  cursor: pointer;
-}
-
-.tab-button.active {
-  background-color: #4285f4;
-  color: white;
-}
-
-#actionButtons {
-  margin-top: 10px;
+.tab-content.active {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
 }
 
-#actionButtons button {
-  padding: 5px 10px;
-  font-size: 14px;
-  border-radius: 4px;
-  border: none;
-  background-color: #4CAF50;
-  color: white;
-  cursor: pointer;
-}
-
-#actionButtons button:hover {
-  background-color: #45a049;
+#expressionSelector {
+  margin: 0.5em 0;
+  padding: 0.25em;
 }
 
 #statusIndicator {
-  font-size: 12px;
-  color: #333;
-  margin-left: auto;
+  margin-top: 0.5em;
+  color: #555;
 }
