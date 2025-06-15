@@ -93,14 +93,19 @@
 
     function updateSelector() {
       const expressions = calculator.getExpressions();
+      const currentId = selector.value;
       selector.innerHTML = "";
       expressions.forEach((e, i) => {
         const opt = document.createElement("option");
         opt.value = e.id;
-        opt.textContent = i + 1;
+        opt.textContent = `Line ${i + 1}`;
         selector.appendChild(opt);
       });
-      if (expressions.length > 0) selector.value = expressions[0].id;
+      if (expressions.find(e => e.id === currentId)) {
+        selector.value = currentId;
+      } else if (expressions.length > 0) {
+        selector.value = expressions[0].id;
+      }
     }
 
     function syncToDesmos() {
@@ -111,8 +116,13 @@
 
     function updateFromDesmos() {
       const expr = calculator.getExpressions().find(e => e.id === selector.value);
-      if (expr && expr.latex !== undefined) latexInput.value = expr.latex;
+      if (expr && expr.latex !== undefined) {
+        latexInput.value = expr.latex;
+        indicator.textContent = `Selected: ${selector.options[selector.selectedIndex].text}`;
+      }
     }
+
+    selector.addEventListener("change", updateFromDesmos);
 
     document.getElementById("sendBtn").onclick = syncToDesmos;
     document.getElementById("getBtn").onclick = updateFromDesmos;
