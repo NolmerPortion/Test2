@@ -2,27 +2,27 @@ const calculator = Desmos.GraphingCalculator(document.getElementById('calculator
   keypad: false
 });
 
-const input = document.getElementById("latexInput");
+let currentId = null;
+let isShift = false;
+
+const latexInput = document.getElementById("latexInput");
 const sendBtn = document.getElementById("sendBtn");
 const getBtn = document.getElementById("getBtn");
 const shiftToggle = document.getElementById("shiftToggle");
 const expressionSelector = document.getElementById("expressionSelector");
 const statusIndicator = document.getElementById("statusIndicator");
 
-let isShift = false;
-let currentId = null;
-
+// expression selector
 function updateExpressionSelector() {
   const expressions = calculator.getExpressions();
-  expressionSelector.innerHTML = '';
+  expressionSelector.innerHTML = "";
   expressions.forEach((exp, index) => {
-    if (exp.id) {
-      const option = document.createElement("option");
-      option.value = exp.id;
-      option.text = `Line ${index + 1} (${exp.id})`;
-      expressionSelector.appendChild(option);
-    }
+    const option = document.createElement("option");
+    option.value = exp.id;
+    option.text = `Line ${index + 1}`;
+    expressionSelector.appendChild(option);
   });
+
   if (expressions.length > 0) {
     currentId = expressions[0].id;
     expressionSelector.value = currentId;
@@ -34,125 +34,125 @@ updateExpressionSelector();
 expressionSelector.addEventListener("change", () => {
   currentId = expressionSelector.value;
   const exp = calculator.getExpressions().find(e => e.id === currentId);
-  if (exp) {
-    input.value = exp.latex || "";
-    statusIndicator.textContent = `Editing: ${currentId}`;
-  }
+  if (exp) latexInput.value = exp.latex;
+  statusIndicator.textContent = `Editing: ${currentId}`;
 });
 
 sendBtn.addEventListener("click", () => {
-  const latex = input.value;
+  const latex = latexInput.value;
   if (!currentId) {
-    currentId = 'custom' + Date.now();
-    calculator.setExpression({ id: currentId, latex });
-    updateExpressionSelector();
-  } else {
-    calculator.setExpression({ id: currentId, latex });
+    currentId = "input" + Date.now();
   }
+  calculator.setExpression({ id: currentId, latex });
+  updateExpressionSelector();
 });
 
 getBtn.addEventListener("click", () => {
-  if (!currentId) {
-    alert("No expression selected.");
-    return;
-  }
+  if (!currentId) return alert("No expression selected.");
   const exp = calculator.getExpressions().find(e => e.id === currentId);
-  if (exp && exp.latex) {
-    input.value = exp.latex;
+  if (exp) {
+    latexInput.value = exp.latex;
   } else {
-    alert("No LaTeX found for selected expression.");
+    alert("No LaTeX found.");
   }
 });
 
-calculator.observeEvent('change', () => {
+calculator.observeEvent("change", () => {
   if (!currentId) return;
   const exp = calculator.getExpressions().find(e => e.id === currentId);
-  if (exp && exp.latex !== input.value) {
-    input.value = exp.latex;
+  if (exp && exp.latex !== latexInput.value) {
+    latexInput.value = exp.latex;
   }
 });
 
-// TAB + BUTTON INJECTION
-const tabs = document.querySelectorAll('.tab-button');
-const tabContents = document.querySelectorAll('.tab-content');
-
-tabs.forEach(btn => {
-  btn.addEventListener('click', () => {
-    tabs.forEach(t => t.classList.remove('active'));
-    tabContents.forEach(tc => tc.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById(btn.dataset.tab).classList.add('active');
+// Keyboard Tab Toggle
+document.querySelectorAll(".tab-button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-button").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.tab).classList.add("active");
   });
 });
-tabs[0].click();
+document.querySelector(".tab-button").click();
 
-// Insert character
-function insertAtCursor(text) {
-  const start = input.selectionStart;
-  const end = input.selectionEnd;
-  input.value = input.value.slice(0, start) + text + input.value.slice(end);
-  input.selectionStart = input.selectionEnd = start + text.length;
-  input.focus();
-  sendBtn.click();
-}
-
-// Shift toggle
-shiftToggle.addEventListener("click", () => {
-  isShift = !isShift;
-  updateAlphabetButtons();
-  shiftToggle.classList.toggle("active", isShift);
+// Insert buttons
+document.querySelectorAll("[data-insert]").forEach(button => {
+  const insertText = JSON.parse('"' + button.getAttribute("data-insert") + '"');
+  button.addEventListener("click", () => {
+    const start = latexInput.selectionStart;
+    const end = latexInput.selectionEnd;
+    latexInput.setRangeText(insertText, start, end, "end");
+    latexInput.focus();
+    sendBtn.click();
+  });
 });
 
-// Alphabet
+// Clear
+document.getElementById("clearInputBtn").addEventListener("click", () => {
+  latexInput.value = "";
+});
+
+// Shift toggle
 function updateAlphabetButtons() {
   const container = document.getElementById("letters");
   container.querySelectorAll("button[data-letter]").forEach(btn => btn.remove());
-
   for (let i = 97; i <= 122; i++) {
-    const ch = String.fromCharCode(isShift ? i - 32 : i);
+    const char = String.fromCharCode(isShift ? i - 32 : i);
     const btn = document.createElement("button");
-    btn.textContent = ch;
-    btn.dataset.letter = ch;
-    btn.addEventListener("click", () => insertAtCursor(ch));
+    btn.textContent = char;
+    btn.dataset.letter = char;
+    btn.addEventListener("click", () => {
+      const start = latexInput.selectionStart;
+      const end = latexInput.selectionEnd;
+      latexInput.setRangeText(char, start, end, "end");
+      latexInput.focus();
+      sendBtn.click();
+    });
     container.appendChild(btn);
   }
 }
+shiftToggle.addEventListener("click", () => {
+  isShift = !isShift;
+  updateAlphabetButtons();
+});
 updateAlphabetButtons();
 
-// Greek
+// Greek letters
 const greek = [
-  "alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta",
-  "iota", "kappa", "lambda", "mu", "nu", "xi", "omicron", "pi", "rho",
-  "sigma", "tau", "upsilon", "phi", "chi", "psi", "omega"
+  "alpha","beta","gamma","delta","epsilon","zeta","eta","theta",
+  "iota","kappa","lambda","mu","nu","xi","omicron","pi","rho",
+  "sigma","tau","upsilon","phi","chi","psi","omega"
 ];
 const greekContainer = document.getElementById("greek");
 greek.forEach(name => {
   const btn = document.createElement("button");
   btn.textContent = name;
   btn.setAttribute("data-insert", `\\${name}`);
+  const insertText = JSON.parse('"' + `\\${name}` + '"');
+  btn.addEventListener("click", () => {
+    const start = latexInput.selectionStart;
+    const end = latexInput.selectionEnd;
+    latexInput.setRangeText(insertText, start, end, "end");
+    latexInput.focus();
+    sendBtn.click();
+  });
   greekContainer.appendChild(btn);
 });
 
-// Function insert
-document.querySelectorAll('[data-insert]').forEach(button => {
-  const raw = button.getAttribute("data-insert");
-  const text = JSON.parse(`"${raw}"`);
-  button.addEventListener("click", () => insertAtCursor(text));
-});
-
-// Save/load/export/import
+// Save/Load/Export/Import
 document.getElementById("saveBtn").addEventListener("click", () => {
-  const state = calculator.getState();
-  localStorage.setItem("desmos_state", JSON.stringify(state));
+  localStorage.setItem("desmos_state", JSON.stringify(calculator.getState()));
   alert("Saved to local storage.");
 });
 
 document.getElementById("loadBtn").addEventListener("click", () => {
-  const state = localStorage.getItem("desmos_state");
-  if (state) {
-    calculator.setState(JSON.parse(state));
+  const saved = localStorage.getItem("desmos_state");
+  if (saved) {
+    calculator.setState(JSON.parse(saved));
     updateExpressionSelector();
-    alert("Loaded from local storage.");
+  } else {
+    alert("No saved state.");
   }
 });
 
@@ -167,18 +167,17 @@ document.getElementById("exportBtn").addEventListener("click", () => {
 document.getElementById("importBtn").addEventListener("click", () => {
   document.getElementById("importFile").click();
 });
-document.getElementById("importFile").addEventListener("change", (e) => {
+document.getElementById("importFile").addEventListener("change", e => {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
     try {
-      const data = JSON.parse(reader.result);
-      calculator.setState(data);
+      const json = JSON.parse(reader.result);
+      calculator.setState(json);
       updateExpressionSelector();
-      alert("Imported successfully.");
     } catch {
-      alert("Invalid file format.");
+      alert("Invalid JSON.");
     }
   };
   reader.readAsText(file);
