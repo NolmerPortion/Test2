@@ -2,54 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Desmos + Greek Keyboard ver.9</title>
+  <title>Desmos + Greek Keyboard ver.10</title>
   <link rel="stylesheet" href="style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
   <style>
-    #calculator {
-      width: 100%;
-      height: 400px;
-    }
-    #controlPanel {
-      margin: 20px;
-    }
-    textarea {
-      width: 100%;
-      font-size: 1.2em;
-      padding: 8px;
-      margin-bottom: 10px;
-    }
-    .tab-button {
-      margin: 2px;
-      padding: 5px 10px;
-    }
-    .tab-content {
-      display: none;
-      margin-top: 10px;
-    }
-    .tab-content.active {
-      display: flex;
-      flex-wrap: wrap;
-    }
-    #buttonPanel button {
-      margin: 2px;
-      padding: 5px 10px;
-      font-size: 1em;
-    }
-    #actionButtons button, select {
-      margin: 5px;
-      padding: 8px 16px;
-      font-size: 1em;
-    }
-    #statusIndicator {
-      margin-top: 10px;
-      font-weight: bold;
-    }
+    #calculator { width: 100%; height: 400px; }
+    #controlPanel { margin: 20px; }
+    textarea { width: 100%; font-size: 1.2em; padding: 8px; margin-bottom: 10px; }
+    .tab-button { margin: 2px; padding: 5px 10px; }
+    .tab-content { display: none; margin-top: 10px; }
+    .tab-content.active { display: flex; flex-wrap: wrap; }
+    #buttonPanel button { margin: 2px; padding: 5px 10px; font-size: 1em; }
+    #actionButtons button, select { margin: 5px; padding: 8px 16px; font-size: 1em; }
+    #statusIndicator { margin-top: 10px; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>Desmos Graph + Greek Keyboard ver.9</h1>
+  <h1>Desmos Graph + Greek Keyboard ver.10</h1>
   <div id="calculator"></div>
 
   <div id="controlPanel">
@@ -102,6 +72,11 @@
       <button id="sendBtn">Send to Desmos</button>
       <button id="getBtn">Get from Desmos</button>
       <button id="clearInputBtn">Clear</button>
+      <button id="saveBtn">💾 Save to Local</button>
+      <button id="loadBtn">📥 Load from Local</button>
+      <button id="exportBtn">📤 Export JSON</button>
+      <input type="file" id="importFile" style="display:none">
+      <button id="importBtn">📁 Import JSON</button>
       <div id="statusIndicator">No expression selected.</div>
     </div>
   </div>
@@ -113,10 +88,7 @@
       const statusIndicator = document.getElementById("statusIndicator");
       const expressionSelector = document.getElementById("expressionSelector");
 
-      let currentSelectedId = null;
-
       function updateSelectorOptions() {
-        const currentValue = expressionSelector.value;
         expressionSelector.innerHTML = "";
         calculator.getExpressions().forEach((exp, idx) => {
           const option = document.createElement("option");
@@ -124,59 +96,91 @@
           option.textContent = `Line ${idx + 1}`;
           expressionSelector.appendChild(option);
         });
-        if (calculator.getExpressions().some(exp => exp.id === currentValue)) {
-          expressionSelector.value = currentValue;
-          currentSelectedId = currentValue;
-        } else if (expressionSelector.options.length > 0) {
-          expressionSelector.value = expressionSelector.options[0].value;
-          currentSelectedId = expressionSelector.value;
-        } else {
-          currentSelectedId = null;
-        }
       }
 
       document.getElementById("sendBtn").addEventListener("click", () => {
         const latex = input.value.trim();
-        if (latex !== "" && currentSelectedId) {
-          calculator.setExpression({ id: currentSelectedId, latex });
+        const selectedId = expressionSelector.value;
+        if (latex !== "" && selectedId) {
+          calculator.setExpression({ id: selectedId, latex });
         }
       });
 
       document.getElementById("getBtn").addEventListener("click", syncFromDesmos);
 
       function syncFromDesmos() {
+        const selectedId = expressionSelector.value;
         const expressions = calculator.getExpressions();
-        const target = expressions.find(exp => exp.id === currentSelectedId);
-        const targetIndex = expressions.findIndex(exp => exp.id === currentSelectedId);
+        const target = expressions.find(exp => exp.id === selectedId);
+        const targetIndex = expressions.findIndex(exp => exp.id === selectedId);
         if (target && target.latex) {
           input.value = target.latex;
           input.dispatchEvent(new Event("input"));
-          statusIndicator.textContent = `Loaded from ID: ${currentSelectedId} (Line ${targetIndex + 1})`;
+          statusIndicator.textContent = `Loaded from ID: ${selectedId} (Line ${targetIndex + 1})`;
         } else {
           statusIndicator.textContent = "Expression not found.";
         }
       }
-
-      expressionSelector.addEventListener("change", () => {
-        currentSelectedId = expressionSelector.value;
-        syncFromDesmos();
-      });
 
       document.getElementById("clearInputBtn").addEventListener("click", () => {
         input.value = "";
         input.focus();
       });
 
+      document.getElementById("saveBtn").addEventListener("click", () => {
+        const state = calculator.getState();
+        localStorage.setItem("desmosGraphState", JSON.stringify(state));
+        alert("Graph state saved locally.");
+      });
+
+      document.getElementById("loadBtn").addEventListener("click", () => {
+        const saved = localStorage.getItem("desmosGraphState");
+        if (saved) {
+          calculator.setState(JSON.parse(saved));
+          updateSelectorOptions();
+        } else {
+          alert("No saved graph found in local storage.");
+        }
+      });
+
+      document.getElementById("exportBtn").addEventListener("click", () => {
+        const state = calculator.getState();
+        const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "desmos_graph.json";
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      document.getElementById("importBtn").addEventListener("click", () => {
+        document.getElementById("importFile").click();
+      });
+
+      document.getElementById("importFile").addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          const json = JSON.parse(reader.result);
+          calculator.setState(json);
+          updateSelectorOptions();
+        };
+        reader.readAsText(file);
+      });
+
       input.addEventListener("input", () => {
-        if (currentSelectedId) {
+        const selectedId = expressionSelector.value;
+        if (selectedId) {
           const latex = input.value.trim();
-          calculator.setExpression({ id: currentSelectedId, latex });
+          calculator.setExpression({ id: selectedId, latex });
         }
       });
 
       calculator.observeEvent("change", () => {
         updateSelectorOptions();
-        if (currentSelectedId) syncFromDesmos();
+        syncFromDesmos();
       });
 
       document.querySelectorAll(".tab-button").forEach(button => {
