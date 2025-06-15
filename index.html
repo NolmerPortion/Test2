@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Desmos + Greek Keyboard</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Desmos API 読み込み + 正しい API Key -->
+  <script src="https://www.desmos.com/api/v1.6/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
+</head>
+<body>
+  <h1>Desmos Graph + Greek Keyboard</h1>
+  <div id="calculator"></div>
+
+  <div id="shift-toggle">Shift: <button id="shiftBtn">OFF</button></div>
+  <div id="keyboard"></div>
+
+  <!-- ギリシャ文字貼り付け用：隠しテキストエリア -->
+  <textarea id="clipboardHelper" style="position:absolute; left:-9999px; top:-9999px;"></textarea>
+
+  <!-- JavaScript読み込み（最後に） -->
+  <script src="script.js"></script>
+</body>
+</html>
