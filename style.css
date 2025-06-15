@@ -93,3 +93,8 @@ body {
   gap: 6px;
   margin-top: 10px;
 }
+
+#greek button {
+  font-family: 'Cambria Math', 'STIX Two Math', 'Times New Roman', serif;
+  font-size: 18px;
+}
