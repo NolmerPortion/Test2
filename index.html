@@ -38,7 +38,9 @@
 
       document.querySelectorAll("#buttonPanel button").forEach(button => {
         button.addEventListener("click", () => {
-          const insertText = button.getAttribute("data-insert").replace(/^\\/, "\\");
+          // 正しい1バックスラッシュを挿入（data-insertでは\\を渡している）
+          const rawInsert = button.getAttribute("data-insert");
+          const insertText = rawInsert.replace(/\\\\/g, "\\");
           insertAtCursor(input, insertText);
         });
       });
@@ -64,13 +66,11 @@
 
       pullBtn.addEventListener("click", () => {
         const expressions = calculator.getExpressions();
-        if (expressions.length === 0) {
-          alert("式が存在しません。");
-          return;
-        }
+        const visibleExprs = expressions.filter(expr => expr.latex && expr.id !== "live_preview");
 
-        const lastExpr = expressions.reverse().find(expr => expr.id !== "live_preview" && expr.latex);
-        if (lastExpr) {
+        if (visibleExprs.length > 0) {
+          // 一番最後に追加された（表示されている）数式を取得
+          const lastExpr = visibleExprs[visibleExprs.length - 1];
           input.value = lastExpr.latex;
           input.focus();
         } else {
