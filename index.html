@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Desmos + Greek Keyboard ver.4</title>
+  <title>Desmos + Greek Keyboard ver.5</title>
   <link rel="stylesheet" href="style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
@@ -49,7 +49,7 @@
   </style>
 </head>
 <body>
-  <h1>Desmos Graph + Greek Keyboard ver.4</h1>
+  <h1>Desmos Graph + Greek Keyboard ver.5</h1>
   <div id="calculator"></div>
 
   <div id="controlPanel">
@@ -121,7 +121,7 @@
         button.addEventListener("click", () => {
           const insertText = JSON.parse('"' + button.getAttribute("data-insert") + '"');
           insertAtCursor(input, insertText);
-          input.dispatchEvent(new Event("input")); // トリガー
+          input.dispatchEvent(new Event("input"));
         });
       });
 
@@ -139,13 +139,13 @@
       });
 
       calculator.observeEvent("change", () => {
-        if (!lastId) return;
         const expressions = calculator.getExpressions();
-        const target = expressions.find(exp => exp.id === lastId);
-        const targetIndex = expressions.findIndex(exp => exp.id === lastId);
-        if (target && target.latex) {
-          input.value = target.latex;
-          statusIndicator.textContent = `Auto-updated from ID: ${lastId} (Line ${targetIndex + 1})`;
+        const selected = expressions.find(exp => exp.latex && calculator.getExpression(exp.id).isSelected);
+        if (selected) {
+          lastId = selected.id;
+          input.value = selected.latex;
+          const targetIndex = expressions.findIndex(exp => exp.id === lastId);
+          statusIndicator.textContent = `Auto-selected ID: ${lastId} (Line ${targetIndex + 1})`;
         }
       });
 
@@ -184,7 +184,6 @@
       document.getElementById("clearInputBtn").addEventListener("click", () => {
         input.value = "";
         if (lastId) calculator.removeExpression({ id: lastId });
-        calculator.removeExpression({ id: "live_preview" });
         lastId = null;
         statusIndicator.textContent = "No expression selected.";
         input.focus();
