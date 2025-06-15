@@ -1,184 +1,161 @@
-const calculator = Desmos.GraphingCalculator(document.getElementById('calculator'), {
-  keypad: false
-});
+const calculator = Desmos.GraphingCalculator(document.getElementById('calculator'));
+let shiftEnabled = false;
 
-let currentId = null;
-let isShift = false;
+// Track current expression ID
+let currentExpressionId = null;
 
-const latexInput = document.getElementById("latexInput");
-const sendBtn = document.getElementById("sendBtn");
-const getBtn = document.getElementById("getBtn");
-const shiftToggle = document.getElementById("shiftToggle");
-const expressionSelector = document.getElementById("expressionSelector");
-const statusIndicator = document.getElementById("statusIndicator");
-
-// expression selector
-function updateExpressionSelector() {
+function updateSelector() {
   const expressions = calculator.getExpressions();
-  expressionSelector.innerHTML = "";
-  expressions.forEach((exp, index) => {
-    const option = document.createElement("option");
-    option.value = exp.id;
-    option.text = `Line ${index + 1}`;
-    expressionSelector.appendChild(option);
+  const selector = document.getElementById("expressionSelector");
+  selector.innerHTML = "";
+  expressions.forEach(expr => {
+    if (expr.id) {
+      const option = document.createElement("option");
+      option.value = expr.id;
+      option.textContent = expr.id;
+      selector.appendChild(option);
+    }
   });
+}
 
-  if (expressions.length > 0) {
-    currentId = expressions[0].id;
-    expressionSelector.value = currentId;
-    statusIndicator.textContent = `Editing: ${currentId}`;
+function syncLatexToTextarea() {
+  const selectedId = document.getElementById("expressionSelector").value;
+  const expr = calculator.getExpressions().find(e => e.id === selectedId);
+  if (expr && expr.latex != null) {
+    document.getElementById("latexInput").value = expr.latex;
+    document.getElementById("statusIndicator").textContent = `Editing ID: ${selectedId}`;
+  } else {
+    document.getElementById("statusIndicator").textContent = "No expression selected.";
   }
 }
-updateExpressionSelector();
 
-expressionSelector.addEventListener("change", () => {
-  currentId = expressionSelector.value;
-  const exp = calculator.getExpressions().find(e => e.id === currentId);
-  if (exp) latexInput.value = exp.latex;
-  statusIndicator.textContent = `Editing: ${currentId}`;
-});
+// Auto-insert characters
+document.getElementById("buttonPanel").addEventListener("click", (e) => {
+  if (e.target.tagName === "BUTTON" && e.target.dataset.insert) {
+    const textArea = document.getElementById("latexInput");
+    const insertText = JSON.parse('"' + e.target.getAttribute("data-insert") + '"');
+    const start = textArea.selectionStart;
+    const end = textArea.selectionEnd;
+    textArea.value = textArea.value.slice(0, start) + insertText + textArea.value.slice(end);
+    textArea.selectionStart = textArea.selectionEnd = start + insertText.length;
 
-sendBtn.addEventListener("click", () => {
-  const latex = latexInput.value;
-  if (!currentId) {
-    currentId = "input" + Date.now();
-  }
-  calculator.setExpression({ id: currentId, latex });
-  updateExpressionSelector();
-});
-
-getBtn.addEventListener("click", () => {
-  if (!currentId) return alert("No expression selected.");
-  const exp = calculator.getExpressions().find(e => e.id === currentId);
-  if (exp) {
-    latexInput.value = exp.latex;
-  } else {
-    alert("No LaTeX found.");
+    document.getElementById("sendBtn").click();
   }
 });
 
-calculator.observeEvent("change", () => {
-  if (!currentId) return;
-  const exp = calculator.getExpressions().find(e => e.id === currentId);
-  if (exp && exp.latex !== latexInput.value) {
-    latexInput.value = exp.latex;
-  }
-});
-
-// Keyboard Tab Toggle
-document.querySelectorAll(".tab-button").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".tab-button").forEach(b => b.classList.remove("active"));
-    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-    btn.classList.add("active");
-    document.getElementById(btn.dataset.tab).classList.add("active");
-  });
-});
-document.querySelector(".tab-button").click();
-
-// Insert buttons
-document.querySelectorAll("[data-insert]").forEach(button => {
-  const insertText = JSON.parse('"' + button.getAttribute("data-insert") + '"');
+// Tab functionality
+document.querySelectorAll(".tab-button").forEach(button => {
   button.addEventListener("click", () => {
-    const start = latexInput.selectionStart;
-    const end = latexInput.selectionEnd;
-    latexInput.setRangeText(insertText, start, end, "end");
-    latexInput.focus();
-    sendBtn.click();
+    document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
+    button.classList.add("active");
+
+    document.querySelectorAll(".tab-content").forEach(tc => tc.style.display = "none");
+    document.getElementById(button.dataset.tab).style.display = "flex";
   });
 });
+document.querySelector(".tab-button[data-tab='letters']").click();
+
+// Greek letters
+const greekLetters = [
+  "alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta",
+  "iota", "kappa", "lambda", "mu", "nu", "xi", "omicron", "pi", "rho",
+  "sigma", "tau", "upsilon", "phi", "chi", "psi", "omega"
+];
+const greekDiv = document.getElementById("greek");
+greekLetters.forEach(letter => {
+  const btn = document.createElement("button");
+  btn.setAttribute("data-insert", `\\${letter}`);
+  btn.textContent = letter;
+  greekDiv.appendChild(btn);
+});
+
+// Alphabet letters
+const alphabetDiv = document.getElementById("letters");
+const shiftBtn = document.getElementById("shiftToggle");
+shiftBtn.addEventListener("click", () => {
+  shiftEnabled = !shiftEnabled;
+  shiftBtn.classList.toggle("active", shiftEnabled);
+  renderAlphabet();
+});
+function renderAlphabet() {
+  const letters = "abcdefghijklmnopqrstuvwxyz".split("");
+  alphabetDiv.innerHTML = "";
+  alphabetDiv.appendChild(shiftBtn);
+  letters.forEach(letter => {
+    const btn = document.createElement("button");
+    const char = shiftEnabled ? letter.toUpperCase() : letter;
+    btn.setAttribute("data-insert", char);
+    btn.textContent = char;
+    alphabetDiv.appendChild(btn);
+  });
+}
+renderAlphabet();
+
+// Send to Desmos
+document.getElementById("sendBtn").addEventListener("click", () => {
+  const id = document.getElementById("expressionSelector").value;
+  const latex = document.getElementById("latexInput").value;
+  calculator.setExpression({ id, latex });
+  syncLatexToTextarea();
+});
+
+// Get from Desmos
+document.getElementById("getBtn").addEventListener("click", syncLatexToTextarea);
 
 // Clear
 document.getElementById("clearInputBtn").addEventListener("click", () => {
-  latexInput.value = "";
+  document.getElementById("latexInput").value = "";
 });
 
-// Shift toggle
-function updateAlphabetButtons() {
-  const container = document.getElementById("letters");
-  container.querySelectorAll("button[data-letter]").forEach(btn => btn.remove());
-  for (let i = 97; i <= 122; i++) {
-    const char = String.fromCharCode(isShift ? i - 32 : i);
-    const btn = document.createElement("button");
-    btn.textContent = char;
-    btn.dataset.letter = char;
-    btn.addEventListener("click", () => {
-      const start = latexInput.selectionStart;
-      const end = latexInput.selectionEnd;
-      latexInput.setRangeText(char, start, end, "end");
-      latexInput.focus();
-      sendBtn.click();
-    });
-    container.appendChild(btn);
-  }
-}
-shiftToggle.addEventListener("click", () => {
-  isShift = !isShift;
-  updateAlphabetButtons();
-});
-updateAlphabetButtons();
+// Load Selector on init
+updateSelector();
+setTimeout(updateSelector, 1000);
 
-// Greek letters
-const greek = [
-  "alpha","beta","gamma","delta","epsilon","zeta","eta","theta",
-  "iota","kappa","lambda","mu","nu","xi","omicron","pi","rho",
-  "sigma","tau","upsilon","phi","chi","psi","omega"
-];
-const greekContainer = document.getElementById("greek");
-greek.forEach(name => {
-  const btn = document.createElement("button");
-  btn.textContent = name;
-  btn.setAttribute("data-insert", `\\${name}`);
-  const insertText = JSON.parse('"' + `\\${name}` + '"');
-  btn.addEventListener("click", () => {
-    const start = latexInput.selectionStart;
-    const end = latexInput.selectionEnd;
-    latexInput.setRangeText(insertText, start, end, "end");
-    latexInput.focus();
-    sendBtn.click();
-  });
-  greekContainer.appendChild(btn);
-});
+// Expression selector change
+document.getElementById("expressionSelector").addEventListener("change", syncLatexToTextarea);
 
-// Save/Load/Export/Import
+// Mutation observer for changes
+const observer = new MutationObserver(() => {
+  syncLatexToTextarea();
+});
+observer.observe(document.getElementById("calculator"), { childList: true, subtree: true });
+
+// Save to localStorage
 document.getElementById("saveBtn").addEventListener("click", () => {
-  localStorage.setItem("desmos_state", JSON.stringify(calculator.getState()));
-  alert("Saved to local storage.");
+  const expressions = calculator.getExpressions();
+  localStorage.setItem("desmosGraph", JSON.stringify(expressions));
+  alert("Saved!");
 });
 
+// Load from localStorage
 document.getElementById("loadBtn").addEventListener("click", () => {
-  const saved = localStorage.getItem("desmos_state");
-  if (saved) {
-    calculator.setState(JSON.parse(saved));
-    updateExpressionSelector();
-  } else {
-    alert("No saved state.");
-  }
+  const data = localStorage.getItem("desmosGraph");
+  if (data) calculator.setExpressions(JSON.parse(data));
+  updateSelector();
 });
 
+// Export JSON
 document.getElementById("exportBtn").addEventListener("click", () => {
-  const blob = new Blob([JSON.stringify(calculator.getState(), null, 2)], { type: "application/json" });
+  const data = JSON.stringify(calculator.getExpressions(), null, 2);
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
+  a.href = url;
   a.download = "desmos_graph.json";
   a.click();
+  URL.revokeObjectURL(url);
 });
 
+// Import JSON
 document.getElementById("importBtn").addEventListener("click", () => {
   document.getElementById("importFile").click();
 });
-document.getElementById("importFile").addEventListener("change", e => {
+document.getElementById("importFile").addEventListener("change", (e) => {
   const file = e.target.files[0];
-  if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
-    try {
-      const json = JSON.parse(reader.result);
-      calculator.setState(json);
-      updateExpressionSelector();
-    } catch {
-      alert("Invalid JSON.");
-    }
+    calculator.setExpressions(JSON.parse(reader.result));
+    updateSelector();
   };
   reader.readAsText(file);
 });
