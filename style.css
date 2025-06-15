@@ -60,7 +60,8 @@ textarea {
   background: #e1e1e1;
 }
 
-#buttonPanel button.active {
+#buttonPanel button.active,
+#shiftToggle.active {
   background: #d0d0ff;
 }
 
